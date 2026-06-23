@@ -11,6 +11,17 @@ document.addEventListener("DOMContentLoaded", () => {
   fetch("data/songs.json")
     .then((res) => res.json())
     .then((data) => {
+      // Apply custom site text if present
+      if (data.siteTitle) {
+        const h1 = document.querySelector(".site-header h1");
+        if (h1) h1.textContent = data.siteTitle;
+        document.title = data.siteTitle + (document.title.includes(" - ") ? document.title.substring(document.title.indexOf(" - ")) : "");
+      }
+      if (data.tagline) {
+        const tag = document.querySelector(".tagline");
+        if (tag) tag.textContent = data.tagline;
+      }
+
       if (document.getElementById("category-grid")) {
         renderCategoryGrid(data);
       } else if (document.getElementById("song-list")) {
@@ -30,19 +41,19 @@ function renderCategoryGrid(data) {
     counts[song.category] = (counts[song.category] || 0) + 1;
   });
 
-  const allCard = makeCategoryCard("all", "All Songs", data.songs.length);
+  const allCard = makeCategoryCard("all", "All Songs", data.songs.length, true);
   grid.appendChild(allCard);
 
   data.categories.forEach((cat) => {
     const count = counts[cat.id] || 0;
-    grid.appendChild(makeCategoryCard(cat.id, cat.name, count));
+    grid.appendChild(makeCategoryCard(cat.id, cat.name, count, false));
   });
 }
 
-function makeCategoryCard(id, name, count) {
+function makeCategoryCard(id, name, count, isAll) {
   const card = document.createElement("a");
   card.href = `playlist.html?category=${encodeURIComponent(id)}`;
-  card.className = "category-card";
+  card.className = "category-card" + (isAll ? " all-card" : "");
   card.innerHTML = `
     <h2>${name}</h2>
     <p>${count} song${count === 1 ? "" : "s"}</p>
@@ -72,6 +83,7 @@ function renderPlaylist(data) {
     li.className = "song-item";
     li.dataset.index = index;
     li.innerHTML = `
+      <span class="song-num">${index + 1}</span>
       <span class="song-title">${song.title}</span>
       <span class="song-icon">&#9654;</span>
     `;

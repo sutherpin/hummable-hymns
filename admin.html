@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin – Hummable Hymns</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div class="admin-login" id="login-screen">
+  <div class="admin-login-box">
+    <h2>🎵 Admin</h2>
+    <p>Hummable Hymns</p>
+    <input type="password" id="pw-input" placeholder="Password" autocomplete="current-password">
+    <br>
+    <button class="btn btn-primary" onclick="tryLogin()" style="width:100%">Sign In</button>
+    <div class="error-msg" id="login-error"></div>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="admin-panel" style="display:none;">
+  <header class="site-header" style="text-align:left;padding:18px 24px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;max-width:760px;margin:0 auto;">
+      <div>
+        <a href="index.html" style="font-size:0.85rem;color:var(--text-dim);margin-right:12px;">← Site</a>
+        <span style="color:var(--accent);font-weight:700;font-size:1.1rem;">Admin Panel</span>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="logout()">Log Out</button>
+    </div>
+  </header>
+
+  <div class="admin-layout">
+
+    <!-- Site Text -->
+    <div class="admin-section">
+      <h2>Site Text</h2>
+      <div class="site-text-fields">
+        <div class="field-row">
+          <label>Site Title</label>
+          <input type="text" id="site-title" placeholder="Hummable Hymns">
+        </div>
+        <div class="field-row">
+          <label>Tagline</label>
+          <input type="text" id="site-tagline" placeholder="Original songs, freely played.">
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Song -->
+    <div class="admin-section">
+      <h2>Add Song</h2>
+      <div class="add-song-form">
+        <div class="row">
+          <input type="text" id="new-title" placeholder="Song title">
+          <input type="text" id="new-filename" placeholder="filename.mp3 (exact, from Cloudflare)">
+        </div>
+        <div class="row">
+          <select id="new-category"></select>
+          <button class="btn btn-primary" onclick="addSong()">+ Add Song</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Song List -->
+    <div class="admin-section">
+      <h2>Songs — drag to reorder</h2>
+      <div class="songs-table" id="songs-table"></div>
+    </div>
+
+  </div>
+
+  <!-- Save Bar -->
+  <div class="save-bar">
+    <span class="save-status" id="save-status"></span>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-secondary" onclick="loadData()">Discard Changes</button>
+      <button class="btn btn-primary" onclick="saveData()">💾 Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Config ──
+const ADMIN_PASSWORD = "hymns2024"; // Change this to your preferred password
+
+// ── Auth ──
+function tryLogin() {
+  const val = document.getElementById("pw-input").value;
+  if (val === ADMIN_PASSWORD) {
+    sessionStorage.setItem("hh_admin", "1");
+    showPanel();
+  } else {
+    document.getElementById("login-error").textContent = "Incorrect password.";
+  }
+}
+document.getElementById("pw-input").addEventListener("keydown", e => {
+  if (e.key === "Enter") tryLogin();
+});
+function logout() {
+  sessionStorage.removeItem("hh_admin");
+  location.reload();
+}
+function showPanel() {
+  document.getElementById("login-screen").style.display = "none";
+  document.getElementById("admin-panel").style.display = "block";
+  loadData();
+}
+if (sessionStorage.getItem("hh_admin") === "1") showPanel();
+
+// ── Data ──
+let songsData = null;
+let dragSrcIndex = null;
+
+function loadData() {
+  fetch("data/songs.json?_=" + Date.now())
+    .then(r => r.json())
+    .then(data => {
+      songsData = data;
+      document.getElementById("site-title").value = data.siteTitle || "";
+      document.getElementById("site-tagline").value = data.tagline || "";
+      renderCategoryDropdown("new-category");
+      renderSongsTable();
+      setStatus("");
+    });
+}
+
+function renderCategoryDropdown(id) {
+  const sel = document.getElementById(id);
+  if (!sel || !songsData) return;
+  sel.innerHTML = songsData.categories.map(c =>
+    `<option value="${c.id}">${c.name}</option>`
+  ).join("");
+}
+
+function renderSongsTable() {
+  const table = document.getElementById("songs-table");
+  table.innerHTML = "";
+  songsData.songs.forEach((song, i) => {
+    const row = document.createElement("div");
+    row.className = "song-row";
+    row.draggable = true;
+    row.dataset.index = i;
+
+    const catOptions = songsData.categories.map(c =>
+      `<option value="${c.id}" ${c.id === song.category ? "selected" : ""}>${c.name}</option>`
+    ).join("");
+
+    row.innerHTML = `
+      <span class="drag-handle" title="Drag to reorder">⠿</span>
+      <div class="song-row-title">
+        <input type="text" value="${escHtml(song.title)}" 
+          oninput="songsData.songs[${i}].title = this.value; markDirty()">
+      </div>
+      <div class="song-row-cat">
+        <select onchange="songsData.songs[${i}].category = this.value; markDirty()">
+          ${catOptions}
+        </select>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="removeSong(${i})">✕</button>
+    `;
+
+    // Drag events
+    row.addEventListener("dragstart", e => {
+      dragSrcIndex = i;
+      row.classList.add("dragging");
+      e.dataTransfer.effectAllowed = "move";
+    });
+    row.addEventListener("dragend", () => {
+      row.classList.remove("dragging");
+      document.querySelectorAll(".song-row").forEach(r => r.classList.remove("drag-over"));
+    });
+    row.addEventListener("dragover", e => {
+      e.preventDefault();
+      document.querySelectorAll(".song-row").forEach(r => r.classList.remove("drag-over"));
+      if (dragSrcIndex !== i) row.classList.add("drag-over");
+    });
+    row.addEventListener("drop", e => {
+      e.preventDefault();
+      if (dragSrcIndex === null || dragSrcIndex === i) return;
+      const moved = songsData.songs.splice(dragSrcIndex, 1)[0];
+      songsData.songs.splice(i, 0, moved);
+      dragSrcIndex = null;
+      markDirty();
+      renderSongsTable();
+    });
+
+    table.appendChild(row);
+  });
+}
+
+function addSong() {
+  const title = document.getElementById("new-title").value.trim();
+  const filename = document.getElementById("new-filename").value.trim();
+  const category = document.getElementById("new-category").value;
+
+  if (!title || !filename) {
+    alert("Please fill in both title and filename.");
+    return;
+  }
+
+  songsData.songs.push({ title, filename, category });
+  document.getElementById("new-title").value = "";
+  document.getElementById("new-filename").value = "";
+  markDirty();
+  renderSongsTable();
+  // Scroll to bottom of table
+  setTimeout(() => {
+    const rows = document.querySelectorAll(".song-row");
+    if (rows.length) rows[rows.length - 1].scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, 50);
+}
+
+function removeSong(index) {
+  const song = songsData.songs[index];
+  if (!confirm(`Remove "${song.title}"?`)) return;
+  songsData.songs.splice(index, 1);
+  markDirty();
+  renderSongsTable();
+}
+
+function markDirty() {
+  setStatus("Unsaved changes");
+  document.getElementById("save-status").style.color = "var(--accent)";
+}
+
+function setStatus(msg) {
+  const el = document.getElementById("save-status");
+  el.textContent = msg;
+}
+
+function saveData() {
+  // Collect current site text
+  songsData.siteTitle = document.getElementById("site-title").value.trim();
+  songsData.tagline = document.getElementById("site-tagline").value.trim();
+
+  // Cloudflare Pages doesn't support write-back via fetch, so we
+  // generate downloadable JSON for the user to replace data/songs.json.
+  const json = JSON.stringify(songsData, null, 2);
+  const blob = new Blob([json], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "songs.json";
+  a.click();
+  URL.revokeObjectURL(url);
+
+  setStatus("✓ songs.json downloaded — upload it to replace data/songs.json on Cloudflare.");
+  document.getElementById("save-status").style.color = "var(--green)";
+}
+
+function escHtml(str) {
+  return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+</script>
+</body>
+</html>
