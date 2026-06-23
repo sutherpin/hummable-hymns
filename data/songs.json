@@ -33,8 +33,8 @@
       "category": "biblically-derived"
     },
     {
-      "title": "Leviticus",
-      "filename": "Leviticus T09 C01_Final.mp3",
+      "title": "Genesis",
+      "filename": "Genesis T08 R9.4 C01 Final.mp3",
       "category": "bible-summary"
     },
     {
@@ -43,28 +43,13 @@
       "category": "bible-summary"
     },
     {
-      "title": "Laodicea",
-      "filename": "07 Laiodocia C01 Final.mp3",
-      "category": "seven-churches"
+      "title": "Leviticus",
+      "filename": "Leviticus T09 C01_Final.mp3",
+      "category": "bible-summary"
     },
     {
-      "title": "Philadelphia",
-      "filename": "06 Philadelphia C01 Final.mp3",
-      "category": "seven-churches"
-    },
-    {
-      "title": "Sardis",
-      "filename": "05 Sardis C01 Final.mp3",
-      "category": "seven-churches"
-    },
-    {
-      "title": "Thyatira",
-      "filename": "04 Thyatira T08 C01 Final.mp3",
-      "category": "seven-churches"
-    },
-    {
-      "title": "Pergamon (Pergamos)",
-      "filename": "03 Pergamon (Pergamos) C01 Final.mp3",
+      "title": "Ephesus",
+      "filename": "01 Ephesus Final.mp3",
       "category": "seven-churches"
     },
     {
@@ -73,8 +58,28 @@
       "category": "seven-churches"
     },
     {
-      "title": "Ephesus",
-      "filename": "01 Ephesus Final.mp3",
+      "title": "Pergamon (Pergamos)",
+      "filename": "03 Pergamon (Pergamos) C01 Final.mp3",
+      "category": "seven-churches"
+    },
+    {
+      "title": "Thyatira",
+      "filename": "04 Thyatira T08 C01 Final.mp3",
+      "category": "seven-churches"
+    },
+    {
+      "title": "Sardis",
+      "filename": "05 Sardis C01 Final.mp3",
+      "category": "seven-churches"
+    },
+    {
+      "title": "Philadelphia",
+      "filename": "06 Philadelphia C01 Final.mp3",
+      "category": "seven-churches"
+    },
+    {
+      "title": "Laodicea",
+      "filename": "07 Laiodocia C01 Final.mp3",
       "category": "seven-churches"
     },
     {
@@ -86,11 +91,6 @@
       "title": "Jeremiah 12",
       "filename": "Jeremiah 12  T04 C01 Final.mp3",
       "category": "biblically-derived"
-    },
-    {
-      "title": "Genesis",
-      "filename": "Genesis T08 R9.4 C01 Final.mp3",
-      "category": "bible-summary"
     },
     {
       "title": "Thornbush King",
@@ -120,7 +120,7 @@
     {
       "title": "Spoken Over Me",
       "filename": "Spoken Over Me T20 R 9.8.mp3",
-      "category": "uncategorized"
+      "category": "inspirational"
     },
     {
       "title": "Proverbs 5: The Stranger",
@@ -140,7 +140,7 @@
     {
       "title": "Days of Noah",
       "filename": "Days of Noah 2.0.mp3",
-      "category": "uncategorized"
+      "category": "inspirational"
     },
     {
       "title": "Rock of Refuge",
@@ -155,7 +155,7 @@
     {
       "title": "Worship",
       "filename": "Worship T15 MV 01 R9.7.mp3",
-      "category": "uncategorized"
+      "category": "inspirational"
     },
     {
       "title": "Fire of the Tongue",
