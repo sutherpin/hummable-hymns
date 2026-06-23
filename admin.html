@@ -49,6 +49,19 @@
       </div>
     </div>
 
+    <!-- Categories -->
+    <div class="admin-section">
+      <h2>Categories</h2>
+      <div id="categories-table" style="margin-bottom:14px;"></div>
+      <div class="add-song-form">
+        <div class="row">
+          <input type="text" id="new-cat-name" placeholder="Category name">
+          <input type="text" id="new-cat-id" placeholder="id-slug (no spaces)">
+          <button class="btn btn-primary" onclick="addCategory()">+ Add</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Add Song -->
     <div class="admin-section">
       <h2>Add Song</h2>
@@ -122,6 +135,7 @@ function loadData() {
       document.getElementById("site-title").value = data.siteTitle || "";
       document.getElementById("site-tagline").value = data.tagline || "";
       renderCategoryDropdown("new-category");
+      renderCategoriesTable();
       renderSongsTable();
       setStatus("");
     });
@@ -231,13 +245,53 @@ function setStatus(msg) {
   el.textContent = msg;
 }
 
+function renderCategoriesTable() {
+  const table = document.getElementById("categories-table");
+  table.innerHTML = "";
+  songsData.categories.forEach((cat, i) => {
+    const row = document.createElement("div");
+    row.className = "song-row";
+    row.innerHTML = `
+      <div class="song-row-title">
+        <input type="text" value="${escHtml(cat.name)}"
+          oninput="songsData.categories[${i}].name = this.value; renderCategoryDropdown('new-category'); markDirty()">
+      </div>
+      <span style="font-size:0.78rem;color:var(--text-dim);padding:0 8px;">${cat.id}</span>
+      <button class="btn btn-danger btn-sm" onclick="removeCategory(${i})">✕</button>
+    `;
+    table.appendChild(row);
+  });
+}
+
+function addCategory() {
+  const name = document.getElementById("new-cat-name").value.trim();
+  let id = document.getElementById("new-cat-id").value.trim()
+    .toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+  if (!name || !id) { alert("Fill in both name and id slug."); return; }
+  if (songsData.categories.find(c => c.id === id)) { alert("That ID already exists."); return; }
+  songsData.categories.push({ id, name });
+  document.getElementById("new-cat-name").value = "";
+  document.getElementById("new-cat-id").value = "";
+  markDirty();
+  renderCategoriesTable();
+  renderCategoryDropdown("new-category");
+}
+
+function removeCategory(i) {
+  const cat = songsData.categories[i];
+  const inUse = songsData.songs.some(s => s.category === cat.id);
+  if (inUse && !confirm(`"${cat.name}" has songs assigned to it. Remove anyway?`)) return;
+  songsData.categories.splice(i, 1);
+  markDirty();
+  renderCategoriesTable();
+  renderCategoryDropdown("new-category");
+}
+
 function saveData() {
-  // Collect current site text
   songsData.siteTitle = document.getElementById("site-title").value.trim();
   songsData.tagline = document.getElementById("site-tagline").value.trim();
+  songsData.lastUpdated = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
 
-  // Cloudflare Pages doesn't support write-back via fetch, so we
-  // generate downloadable JSON for the user to replace data/songs.json.
   const json = JSON.stringify(songsData, null, 2);
   const blob = new Blob([json], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -247,7 +301,7 @@ function saveData() {
   a.click();
   URL.revokeObjectURL(url);
 
-  setStatus("✓ songs.json downloaded — upload it to replace data/songs.json on Cloudflare.");
+  setStatus("✓ songs.json downloaded — replace data/songs.json in your GitHub repo.");
   document.getElementById("save-status").style.color = "var(--green)";
 }
 

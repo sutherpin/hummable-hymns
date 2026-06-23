@@ -29,8 +29,8 @@
       "category": "biblically-derived"
     },
     {
-      "title": "Genesis",
-      "filename": "Genesis T08 R9.4 C01 Final.mp3",
+      "title": "Leviticus",
+      "filename": "Leviticus T09 C01_Final.mp3",
       "category": "bible-summary"
     },
     {
@@ -39,33 +39,8 @@
       "category": "bible-summary"
     },
     {
-      "title": "Leviticus",
-      "filename": "Leviticus T09 C01_Final.mp3",
-      "category": "bible-summary"
-    },
-    {
-      "title": "Ephesus",
-      "filename": "01 Ephesus Final.mp3",
-      "category": "seven-churches"
-    },
-    {
-      "title": "Smyrna",
-      "filename": "02 Church at Smyrna C05 Final.mp3",
-      "category": "seven-churches"
-    },
-    {
-      "title": "Pergamon (Pergamos)",
-      "filename": "03 Pergamon (Pergamos) C01 Final.mp3",
-      "category": "seven-churches"
-    },
-    {
-      "title": "Thyatira",
-      "filename": "04 Thyatira T08 C01 Final.mp3",
-      "category": "seven-churches"
-    },
-    {
-      "title": "Sardis",
-      "filename": "05 Sardis C01 Final.mp3",
+      "title": "Laodicea",
+      "filename": "07 Laiodocia C01 Final.mp3",
       "category": "seven-churches"
     },
     {
@@ -74,8 +49,28 @@
       "category": "seven-churches"
     },
     {
-      "title": "Laodicea",
-      "filename": "07 Laiodocia C01 Final.mp3",
+      "title": "Sardis",
+      "filename": "05 Sardis C01 Final.mp3",
+      "category": "seven-churches"
+    },
+    {
+      "title": "Thyatira",
+      "filename": "04 Thyatira T08 C01 Final.mp3",
+      "category": "seven-churches"
+    },
+    {
+      "title": "Pergamon (Pergamos)",
+      "filename": "03 Pergamon (Pergamos) C01 Final.mp3",
+      "category": "seven-churches"
+    },
+    {
+      "title": "Smyrna",
+      "filename": "02 Church at Smyrna C05 Final.mp3",
+      "category": "seven-churches"
+    },
+    {
+      "title": "Ephesus",
+      "filename": "01 Ephesus Final.mp3",
       "category": "seven-churches"
     },
     {
@@ -87,6 +82,11 @@
       "title": "Jeremiah 12",
       "filename": "Jeremiah 12  T04 C01 Final.mp3",
       "category": "biblically-derived"
+    },
+    {
+      "title": "Genesis",
+      "filename": "Genesis T08 R9.4 C01 Final.mp3",
+      "category": "bible-summary"
     },
     {
       "title": "Thornbush King",
@@ -160,5 +160,5 @@
     }
   ],
   "siteTitle": "Hummable Hymns",
-  "tagline": "Original works, created with AI tools. Goal: to uplift, encourage, strengthen and nourish the Body"
+  "tagline": "Original songs, freely played."
 }

@@ -22,6 +22,11 @@ document.addEventListener("DOMContentLoaded", () => {
         if (tag) tag.textContent = data.tagline;
       }
 
+      if (data.lastUpdated) {
+        const el = document.getElementById("last-updated");
+        if (el) el.textContent = "Last updated: " + data.lastUpdated;
+      }
+
       if (document.getElementById("category-grid")) {
         renderCategoryGrid(data);
       } else if (document.getElementById("song-list")) {
