@@ -14,7 +14,11 @@
     },
     {
       "id": "uncategorized",
-      "name": "Uncategorized"
+      "name": "UnCategorized"
+    },
+    {
+      "id": "inspirational",
+      "name": "Inspirational"
     }
   ],
   "songs": [
@@ -160,5 +164,6 @@
     }
   ],
   "siteTitle": "Hummable Hymns",
-  "tagline": "Original songs, freely played."
+  "tagline": "Original songs to uplift, encourage, strengthen and nourish the Body",
+  "lastUpdated": "2026-06-23"
 }
