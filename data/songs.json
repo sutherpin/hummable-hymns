@@ -1,0 +1,38 @@
+{
+  "categories": [
+    { "id": "bible-summary", "name": "Bible Book Summary Songs" },
+    { "id": "seven-churches", "name": "7 Churches" },
+    { "id": "biblically-derived", "name": "Biblically Derived Songs" },
+    { "id": "uncategorized", "name": "Uncategorized" }
+  ],
+  "songs": [
+    { "title": "Psalm 8: How Majestic is Your Name", "filename": "Psalm 8_ How Majestic is Your Name.mp3", "category": "biblically-derived" },
+    { "title": "Ephesians 4: Unity", "filename": "Eph 4 Unity T21 R9.6 C03.mp3", "category": "biblically-derived" },
+    { "title": "Leviticus", "filename": "Leviticus T09 C01_Final.mp3", "category": "bible-summary" },
+    { "title": "Exodus", "filename": "Exodus T11 C01 _Final.mp3", "category": "bible-summary" },
+    { "title": "Laodicea", "filename": "07 Laiodocia C01 Final.mp3", "category": "seven-churches" },
+    { "title": "Philadelphia", "filename": "06 Philadelphia C01 Final.mp3", "category": "seven-churches" },
+    { "title": "Sardis", "filename": "05 Sardis C01 Final.mp3", "category": "seven-churches" },
+    { "title": "Thyatira", "filename": "04 Thyatira T08 C01 Final.mp3", "category": "seven-churches" },
+    { "title": "Pergamon (Pergamos)", "filename": "03 Pergamon (Pergamos) C01 Final.mp3", "category": "seven-churches" },
+    { "title": "Smyrna", "filename": "02 Church at Smyrna C05 Final.mp3", "category": "seven-churches" },
+    { "title": "Ephesus", "filename": "01 Ephesus Final.mp3", "category": "seven-churches" },
+    { "title": "Do Not Worry (Matthew 6)", "filename": "Do Not Worry (Matt 6) T06 R9.4 C01 Final.mp3", "category": "biblically-derived" },
+    { "title": "Jeremiah 12", "filename": "Jeremiah 12  T04 C01 Final.mp3", "category": "biblically-derived" },
+    { "title": "Genesis", "filename": "Genesis T08 R9.4 C01 Final.mp3", "category": "bible-summary" },
+    { "title": "Thornbush King", "filename": "Thornbush King T8 R9.5.mp3", "category": "biblically-derived" },
+    { "title": "Balaam vs Angel", "filename": "Balaam vs Angel R9.5 (1).mp3", "category": "biblically-derived" },
+    { "title": "Love Chapter (1 Corinthians 13)", "filename": "Love Chapter R9.6 C01_FInal.mp3", "category": "biblically-derived" },
+    { "title": "Stand Firm (A Song of Biblical Courage)", "filename": "Stand Firm (A Song of Biblical Courage) Blues Rate9.4_Final.mp3", "category": "biblically-derived" },
+    { "title": "Chains of Your Own Making", "filename": "Chains of your own Making T1 R9.7.mp3", "category": "biblically-derived" },
+    { "title": "Spoken Over Me", "filename": "Spoken Over Me T20 R 9.8.mp3", "category": "uncategorized" },
+    { "title": "Proverbs 5: The Stranger", "filename": "Proverbs 5 - The Stranger T13 R9.6.mp3", "category": "biblically-derived" },
+    { "title": "Think on These Things (Ephesians)", "filename": "Think on These Things Eph T09 R10.mp3", "category": "biblically-derived" },
+    { "title": "Proverbs 18: Strong Tower", "filename": "Proverbs 18_ Strong Tower T08 R9.9.mp3", "category": "biblically-derived" },
+    { "title": "Days of Noah", "filename": "Days of Noah 2.0.mp3", "category": "uncategorized" },
+    { "title": "Rock of Refuge", "filename": "Rock of Refuge T32 R9.9 Final.mp3", "category": "biblically-derived" },
+    { "title": "1 Timothy 3: Overseer", "filename": "1 Tim 3 Overseer T12 R9.9 Final.mp3", "category": "biblically-derived" },
+    { "title": "Worship", "filename": "Worship T15 MV 01 R9.7.mp3", "category": "uncategorized" },
+    { "title": "Fire of the Tongue", "filename": "Fire of the Tongue T16 R9.6 Cover 04 R9.mp3", "category": "biblically-derived" }
+  ]
+}
