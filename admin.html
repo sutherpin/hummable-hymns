@@ -290,7 +290,10 @@ function removeCategory(i) {
 function saveData() {
   songsData.siteTitle = document.getElementById("site-title").value.trim();
   songsData.tagline = document.getElementById("site-tagline").value.trim();
-  songsData.lastUpdated = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+  songsData.lastUpdated = new Date().toLocaleDateString("en-US", {
+    timeZone: "America/Los_Angeles",
+    year: "numeric", month: "2-digit", day: "2-digit"
+  });
 
   const json = JSON.stringify(songsData, null, 2);
   const blob = new Blob([json], { type: "application/json" });

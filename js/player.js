@@ -48,6 +48,13 @@ const Player = (() => {
 
     audio.addEventListener("ended", playNext);
 
+    audio.addEventListener("error", () => {
+      const song = playlist[currentIndex];
+      const title = song ? song.title : "Unknown";
+      document.getElementById("now-playing-title").textContent = `⚠️ Error loading "${title}" — file may be missing or URL is broken.`;
+      document.getElementById("play-pause-btn").innerHTML = "&#9654;";
+    });
+
     audio.addEventListener("play", () => {
       playPauseBtn.innerHTML = "&#10074;&#10074;"; // pause icon
     });

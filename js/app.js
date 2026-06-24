@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const yearEl = document.getElementById("year");
   if (yearEl) yearEl.textContent = new Date().getFullYear();
 
-  fetch("data/songs.json")
+  fetch("data/songs.json?_=" + Date.now())
     .then((res) => res.json())
     .then((data) => {
       // Apply custom site text if present
