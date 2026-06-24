@@ -292,7 +292,7 @@ function saveData() {
   songsData.tagline = document.getElementById("site-tagline").value.trim();
   songsData.lastUpdated = new Date().toLocaleDateString("en-US", {
     timeZone: "America/Los_Angeles",
-    year: "numeric", month: "2-digit", day: "2-digit"
+    year: "numeric", month: "long", day: "numeric"
   });
 
   const json = JSON.stringify(songsData, null, 2);
