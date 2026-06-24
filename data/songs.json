@@ -2,11 +2,11 @@
   "categories": [
     {
       "id": "bible-summary",
-      "name": "Bible Book Summary Songs"
+      "name": "Books of the Bible Collection"
     },
     {
       "id": "seven-churches",
-      "name": "7 Churches"
+      "name": "7 Churches Collection"
     },
     {
       "id": "biblically-derived",
@@ -18,7 +18,7 @@
     },
     {
       "id": "inspirational",
-      "name": "Inspirational"
+      "name": "Inspirational Collection"
     }
   ],
   "songs": [
@@ -169,6 +169,6 @@
     }
   ],
   "siteTitle": "Hummable Hymns",
-  "tagline": "Original songs composed with AI tools to uplift, encourage and nourish the Body of Christ",
-  "lastUpdated": "06/23/2026"
+  "tagline": "Original songs composed with AI tools to uplift, encourage and nourish the Bride of Christ",
+  "lastUpdated": "June 23, 2026"
 }
