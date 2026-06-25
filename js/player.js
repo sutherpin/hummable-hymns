@@ -28,7 +28,7 @@ const Player = (() => {
   let playlist = [];
   let currentIndex = -1;
   let onTrackChange = () => {};
-  let lyricsBtn, lyricsPanel, lyricsPanelBody, lyricsCloseBtn;
+  let lyricsBtn, lyricsPanel, lyricsPanelBody;
   let lyricsRequestId = 0; // guards against a slow/old fetch overwriting a newer track's lyrics
 
   function init() {
@@ -44,7 +44,6 @@ const Player = (() => {
     lyricsBtn = document.getElementById("lyrics-btn");
     lyricsPanel = document.getElementById("lyrics-panel");
     lyricsPanelBody = document.getElementById("lyrics-panel-body");
-    lyricsCloseBtn = document.getElementById("lyrics-close-btn");
 
     playPauseBtn.addEventListener("click", togglePlay);
     prevBtn.addEventListener("click", playPrev);
@@ -55,12 +54,9 @@ const Player = (() => {
     if (lyricsBtn) {
       lyricsBtn.addEventListener("click", () => {
         if (lyricsBtn.disabled) return;
-        lyricsPanel.classList.add("open");
-      });
-    }
-    if (lyricsCloseBtn) {
-      lyricsCloseBtn.addEventListener("click", () => {
-        lyricsPanel.classList.remove("open");
+        const isOpen = lyricsPanel.classList.toggle("open");
+        lyricsBtn.innerHTML = isOpen ? "&#9650; Hide Lyrics" : "&#9660; Lyrics";
+        lyricsBtn.setAttribute("aria-label", isOpen ? "Hide lyrics" : "Show lyrics");
       });
     }
 
@@ -125,6 +121,8 @@ const Player = (() => {
     const requestId = ++lyricsRequestId;
     lyricsPanel.classList.remove("open");
     lyricsBtn.disabled = true;
+    lyricsBtn.innerHTML = "&#9660; Lyrics";
+    lyricsBtn.setAttribute("aria-label", "Show lyrics");
     lyricsPanelBody.textContent = "";
 
     fetch(buildLyricsUrl(song.filename))
@@ -134,7 +132,7 @@ const Player = (() => {
       })
       .then((text) => {
         if (requestId !== lyricsRequestId) return; // a newer track started loading; discard
-        lyricsPanelBody.textContent = text;
+        renderLyrics(text);
         lyricsBtn.disabled = false;
       })
       .catch(() => {
@@ -142,6 +140,36 @@ const Player = (() => {
         lyricsBtn.disabled = true;
         lyricsPanelBody.textContent = "";
       });
+  }
+
+  // Lyrics files come from various sources and may use \n, \r\n, or lone
+  // \r line endings. We normalize all of those to \n first, then build one
+  // element per line so each line break in the source is honored exactly —
+  // relying on CSS white-space alone breaks on lone-\r files and collapses
+  // blank lines, which is what produced the run-together lyrics text.
+  function renderLyrics(rawText) {
+    lyricsPanelBody.textContent = "";
+    const normalized = rawText
+      .replace(/^\uFEFF/, "") // strip BOM some lyric files are saved with
+      .replace(/\r\n/g, "\n")
+      .replace(/\r/g, "\n");
+    const lines = normalized.split("\n");
+
+    lines.forEach((line) => {
+      const trimmed = line.trim();
+      const div = document.createElement("div");
+      const isSection = /^\[.*\]$/.test(trimmed);
+      if (trimmed === "") {
+        div.className = "lyrics-line lyrics-blank";
+      } else if (isSection) {
+        div.className = "lyrics-line lyrics-section";
+        div.textContent = trimmed;
+      } else {
+        div.className = "lyrics-line";
+        div.textContent = line;
+      }
+      lyricsPanelBody.appendChild(div);
+    });
   }
 
   function togglePlay() {
