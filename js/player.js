@@ -9,6 +9,13 @@ function buildSongUrl(filename) {
   return R2_BASE_URL + "/" + encodeURIComponent(filename);
 }
 
+// Lyrics live alongside the mp3 in the same R2 bucket, same base filename,
+// but with a .txt extension instead of .mp3 (e.g. "Song.mp3" -> "Song.txt").
+function buildLyricsUrl(filename) {
+  const base = filename.replace(/\.[^./]+$/, "");
+  return R2_BASE_URL + "/" + encodeURIComponent(base + ".txt");
+}
+
 function formatTime(seconds) {
   if (!isFinite(seconds) || seconds < 0) return "0:00";
   const m = Math.floor(seconds / 60);
@@ -21,6 +28,8 @@ const Player = (() => {
   let playlist = [];
   let currentIndex = -1;
   let onTrackChange = () => {};
+  let lyricsBtn, lyricsPanel, lyricsPanelBody, lyricsCloseBtn;
+  let lyricsRequestId = 0; // guards against a slow/old fetch overwriting a newer track's lyrics
 
   function init() {
     audio = document.getElementById("audio-player");
@@ -32,9 +41,28 @@ const Player = (() => {
     const currentTimeEl = document.getElementById("current-time");
     const durationTimeEl = document.getElementById("duration-time");
 
+    lyricsBtn = document.getElementById("lyrics-btn");
+    lyricsPanel = document.getElementById("lyrics-panel");
+    lyricsPanelBody = document.getElementById("lyrics-panel-body");
+    lyricsCloseBtn = document.getElementById("lyrics-close-btn");
+
     playPauseBtn.addEventListener("click", togglePlay);
     prevBtn.addEventListener("click", playPrev);
     nextBtn.addEventListener("click", playNext);
+
+    // Expanding/collapsing lyrics is purely a CSS/DOM toggle — it never
+    // touches `audio`, so play/pause/seek/volume continue uninterrupted.
+    if (lyricsBtn) {
+      lyricsBtn.addEventListener("click", () => {
+        if (lyricsBtn.disabled) return;
+        lyricsPanel.classList.add("open");
+      });
+    }
+    if (lyricsCloseBtn) {
+      lyricsCloseBtn.addEventListener("click", () => {
+        lyricsPanel.classList.remove("open");
+      });
+    }
 
     audio.addEventListener("loadedmetadata", () => {
       seekBar.max = audio.duration || 0;
@@ -86,6 +114,34 @@ const Player = (() => {
       /* Autoplay may be blocked until user interacts; that's fine. */
     });
     onTrackChange(currentIndex, song);
+    loadLyricsFor(song);
+  }
+
+  function loadLyricsFor(song) {
+    if (!lyricsBtn || !lyricsPanelBody) return;
+
+    // Switching tracks always closes any open panel and disables the
+    // button until we've confirmed whether lyrics exist for the new song.
+    const requestId = ++lyricsRequestId;
+    lyricsPanel.classList.remove("open");
+    lyricsBtn.disabled = true;
+    lyricsPanelBody.textContent = "";
+
+    fetch(buildLyricsUrl(song.filename))
+      .then((res) => {
+        if (!res.ok) throw new Error("No lyrics file for this song");
+        return res.text();
+      })
+      .then((text) => {
+        if (requestId !== lyricsRequestId) return; // a newer track started loading; discard
+        lyricsPanelBody.textContent = text;
+        lyricsBtn.disabled = false;
+      })
+      .catch(() => {
+        if (requestId !== lyricsRequestId) return;
+        lyricsBtn.disabled = true;
+        lyricsPanelBody.textContent = "";
+      });
   }
 
   function togglePlay() {

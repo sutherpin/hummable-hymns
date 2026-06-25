@@ -22,6 +22,15 @@
   </main>
 
   <div class="player-bar" id="player-bar">
+    <div class="lyrics-panel" id="lyrics-panel">
+      <div class="lyrics-panel-header">
+        <span>Lyrics</span>
+        <button id="lyrics-close-btn" aria-label="Collapse lyrics" class="lyrics-close-btn">&#9650; Collapse</button>
+      </div>
+      <div class="lyrics-panel-body" id="lyrics-panel-body">
+        <!-- Lyrics text injected here by player.js -->
+      </div>
+    </div>
     <div class="player-info">
       <p id="now-playing-title">Select a song</p>
     </div>
@@ -34,6 +43,7 @@
       <button id="prev-btn" aria-label="Previous">&#9664;&#9664;</button>
       <button id="play-pause-btn" aria-label="Play">&#9654;</button>
       <button id="next-btn" aria-label="Next">&#9654;&#9654;</button>
+      <button id="lyrics-btn" aria-label="Show lyrics" class="lyrics-btn" disabled>Lyrics</button>
       <input type="range" id="volume-bar" min="0" max="1" step="0.01" value="1" aria-label="Volume">
     </div>
     <audio id="audio-player" preload="none"></audio>

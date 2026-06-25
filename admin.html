@@ -68,12 +68,15 @@
       <div class="add-song-form">
         <div class="row">
           <input type="text" id="new-title" placeholder="Song title">
-          <input type="text" id="new-filename" placeholder="filename.mp3 (exact, from Cloudflare)">
+          <input type="text" id="new-filename" placeholder="base filename, no extension (e.g. Psalm 8_ How Majestic is Your Name)">
         </div>
         <div class="row">
           <select id="new-category"></select>
           <button class="btn btn-primary" onclick="addSong()">+ Add Song</button>
         </div>
+        <p style="font-size:0.78rem;color:var(--text-dim);margin:2px 0 0;">
+          Just the base name — <code>.mp3</code> is added automatically. Lyrics will be looked up at the same name with a <code>.txt</code> extension.
+        </p>
       </div>
     </div>
 
@@ -207,12 +210,18 @@ function renderSongsTable() {
 
 function addSong() {
   const title = document.getElementById("new-title").value.trim();
-  const filename = document.getElementById("new-filename").value.trim();
+  let filename = document.getElementById("new-filename").value.trim();
   const category = document.getElementById("new-category").value;
 
   if (!title || !filename) {
     alert("Please fill in both title and filename.");
     return;
+  }
+
+  // The filename field is just the base name now — assume .mp3 unless
+  // the person already typed an extension themselves.
+  if (!/\.[a-z0-9]{2,4}$/i.test(filename)) {
+    filename += ".mp3";
   }
 
   songsData.songs.push({ title, filename, category });
