@@ -4,14 +4,19 @@
    - the song list + wires up Player on playlist.html
 */
 
-document.addEventListener("DOMContentLoaded", () => {
-  const yearEl = document.getElementById("year");
-  if (yearEl) yearEl.textContent = new Date().getFullYear();
+const NEW_ADDITIONS_DAYS = 10;
 
+function isRecent(dateStr) {
+  if (!dateStr) return false;
+  const d = new Date(dateStr);
+  if (isNaN(d)) return false;
+  return (Date.now() - d.getTime()) / (1000 * 60 * 60 * 24) <= NEW_ADDITIONS_DAYS;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
   fetch("data/songs.json?_=" + Date.now())
     .then((res) => res.json())
     .then((data) => {
-      // Apply custom site text if present
       if (data.siteTitle) {
         const h1 = document.querySelector(".site-header h1");
         if (h1) h1.textContent = data.siteTitle;
@@ -21,7 +26,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const tag = document.querySelector(".tagline");
         if (tag) tag.textContent = data.tagline;
       }
-
       if (data.lastUpdated) {
         const el = document.getElementById("last-updated");
         if (el) el.textContent = "Last updated: " + data.lastUpdated;
@@ -41,24 +45,34 @@ document.addEventListener("DOMContentLoaded", () => {
 function renderCategoryGrid(data) {
   const grid = document.getElementById("category-grid");
 
+  // Count songs per real category
   const counts = {};
   data.songs.forEach((song) => {
     counts[song.category] = (counts[song.category] || 0) + 1;
   });
 
-  const allCard = makeCategoryCard("all", "All Songs", data.songs.length, true);
-  grid.appendChild(allCard);
+  // Check for recent songs (New Additions)
+  const recentSongs = data.songs.filter((s) => isRecent(s.dateAdded));
 
+  // All Songs card
+  grid.appendChild(makeCategoryCard("all", "All Songs", data.songs.length, true));
+
+  // New Additions card — only shown if there are recent songs
+  if (recentSongs.length > 0) {
+    grid.appendChild(makeCategoryCard("new-additions", "New Additions", recentSongs.length, false, true));
+  }
+
+  // Regular category cards
   data.categories.forEach((cat) => {
     const count = counts[cat.id] || 0;
-    grid.appendChild(makeCategoryCard(cat.id, cat.name, count, false));
+    grid.appendChild(makeCategoryCard(cat.id, cat.name, count, false, false));
   });
 }
 
-function makeCategoryCard(id, name, count, isAll) {
+function makeCategoryCard(id, name, count, isAll, isNew) {
   const card = document.createElement("a");
   card.href = `playlist.html?category=${encodeURIComponent(id)}`;
-  card.className = "category-card" + (isAll ? " all-card" : "");
+  card.className = "category-card" + (isAll ? " all-card" : "") + (isNew ? " new-card" : "");
   card.innerHTML = `
     <h2>${name}</h2>
     <p>${count} song${count === 1 ? "" : "s"}</p>
@@ -70,17 +84,21 @@ function renderPlaylist(data) {
   const params = new URLSearchParams(window.location.search);
   const categoryId = params.get("category") || "all";
 
-  const categoryName =
-    categoryId === "all"
-      ? "All Songs"
-      : (data.categories.find((c) => c.id === categoryId) || {}).name || "Playlist";
+  let categoryName;
+  let songs;
+
+  if (categoryId === "all") {
+    categoryName = "All Songs";
+    songs = data.songs;
+  } else if (categoryId === "new-additions") {
+    categoryName = "New Additions";
+    songs = data.songs.filter((s) => isRecent(s.dateAdded));
+  } else {
+    categoryName = (data.categories.find((c) => c.id === categoryId) || {}).name || "Playlist";
+    songs = data.songs.filter((s) => s.category === categoryId);
+  }
 
   document.getElementById("category-title").textContent = categoryName;
-
-  const songs =
-    categoryId === "all"
-      ? data.songs
-      : data.songs.filter((s) => s.category === categoryId);
 
   const listEl = document.getElementById("song-list");
   songs.forEach((song, index) => {

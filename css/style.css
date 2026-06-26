@@ -1,18 +1,18 @@
 :root {
-  --bg: #0d0f1a;
-  --surface: #161928;
-  --surface-light: #1f2438;
+  --bg: #0a0c18;
+  --surface: #141726;
+  --surface-light: #1e2340;
   --surface-hover: #252c44;
-  --text: #f0f2fa;
-  --text-dim: #8892b0;
-  --accent: #e8a030;
-  --accent-glow: rgba(232, 160, 48, 0.18);
-  --accent2: #7c5cbf;
-  --accent2-glow: rgba(124, 92, 191, 0.18);
+  --text: #ffffff;
+  --text-dim: #b0bcd8;
+  --accent: #f5b040;
+  --accent-glow: rgba(245, 176, 64, 0.22);
+  --accent2: #9b7de0;
+  --accent2-glow: rgba(155, 125, 224, 0.22);
   --green: #3dba7e;
   --radius: 14px;
   --radius-sm: 8px;
-  --gradient-header: linear-gradient(135deg, #1a1040 0%, #0d1525 60%, #0d0f1a 100%);
+  --gradient-header: linear-gradient(135deg, #1a1040 0%, #0d1525 60%, #0a0c18 100%);
 }
 
 * { box-sizing: border-box; }
@@ -57,7 +57,7 @@ a { color: var(--accent); text-decoration: none; }
   text-shadow: none;
 }
 .tagline {
-  color: var(--text-dim);
+  color: #c8d4f0;
   margin: 8px 0 0;
   font-size: 0.95rem;
   font-style: italic;
@@ -94,7 +94,7 @@ a { color: var(--accent); text-decoration: none; }
 
 .category-card {
   background: var(--surface);
-  border: 1px solid rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
   border-radius: var(--radius);
   padding: 22px 20px;
   cursor: pointer;
@@ -156,7 +156,7 @@ a { color: var(--accent); text-decoration: none; }
   align-items: center;
   padding: 13px 14px;
   border-radius: var(--radius-sm);
-  border-bottom: 1px solid rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
   cursor: pointer;
   transition: background 0.13s;
   gap: 12px;
@@ -550,3 +550,16 @@ input[type="range"]::-moz-range-thumb {
   backdrop-filter: blur(10px);
 }
 .save-status { font-size: 0.85rem; color: var(--green); }
+
+/* New Additions card */
+.category-card.new-card {
+  border-color: rgba(61, 186, 126, 0.3);
+  background: linear-gradient(135deg, #0f2820 0%, var(--surface) 100%);
+}
+.category-card.new-card::before {
+  background: linear-gradient(90deg, var(--green), var(--accent));
+  opacity: 0.6;
+}
+.category-card.new-card h2 {
+  color: var(--green);
+}

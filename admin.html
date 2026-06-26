@@ -227,7 +227,8 @@ function addSong() {
     filename += ".mp3";
   }
 
-  songsData.songs.push({ title, filename, category });
+  const dateAdded = new Date().toLocaleDateString("en-US", { timeZone: "America/Los_Angeles", year: "numeric", month: "long", day: "numeric" });
+  songsData.songs.push({ title, filename, category, dateAdded });
   document.getElementById("new-title").value = "";
   document.getElementById("new-filename").value = "";
   markDirty();
