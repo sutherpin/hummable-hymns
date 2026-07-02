@@ -30,6 +30,8 @@ const Player = (() => {
   let onTrackChange = () => {};
   let lyricsBtn, lyricsPanel, lyricsPanelBody;
   let lyricsRequestId = 0; // guards against a slow/old fetch overwriting a newer track's lyrics
+  let retryCount = 0;
+  const MAX_RETRIES = 3;
 
   function init() {
     audio = document.getElementById("audio-player");
@@ -73,6 +75,14 @@ const Player = (() => {
     audio.addEventListener("ended", playNext);
 
     audio.addEventListener("error", () => {
+      if (retryCount < MAX_RETRIES) {
+        retryCount++;
+        console.warn(`Retrying audio load (${retryCount}/${MAX_RETRIES})...`);
+        audio.load();
+        audio.play().catch(() => {});
+        return;
+      }
+
       const song = playlist[currentIndex];
       const title = song ? song.title : "Unknown";
       document.getElementById("now-playing-title").textContent = `⚠️ Error loading "${title}" — file may be missing or URL is broken.`;
@@ -104,6 +114,7 @@ const Player = (() => {
   function loadTrack(index) {
     if (index < 0 || index >= playlist.length) return;
     currentIndex = index;
+    retryCount = 0;
     const song = playlist[currentIndex];
     audio.src = buildSongUrl(song.filename);
     audio.play().catch(() => {
