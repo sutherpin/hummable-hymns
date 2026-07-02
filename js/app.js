@@ -14,6 +14,8 @@ function isRecent(dateStr) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  fetch("data/songs.json")
+    .then((res) => res.json())
     .then((data) => {
       if (data.siteTitle) {
         const h1 = document.querySelector(".site-header h1");
