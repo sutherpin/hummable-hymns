@@ -80,6 +80,11 @@ function makeCategoryCard(id, name, count, isAll, isNew) {
   return card;
 }
 
+// Global variables for search functionality
+let allSongs = [];
+let currentSongs = [];
+let searchTimeout = null;
+
 function renderPlaylist(data) {
   const params = new URLSearchParams(window.location.search);
   const categoryId = params.get("category") || "all";
@@ -97,6 +102,10 @@ function renderPlaylist(data) {
     categoryName = (data.categories.find((c) => c.id === categoryId) || {}).name || "Playlist";
     songs = data.songs.filter((s) => s.category === categoryId);
   }
+
+  // Store all songs and current songs for search functionality
+  allSongs = data.songs;
+  currentSongs = songs;
 
   document.getElementById("category-title").textContent = categoryName;
 
@@ -127,5 +136,115 @@ function renderPlaylist(data) {
   Player.setPlaylist(songs, -1, (index, song) => {
     document.getElementById("now-playing-title").textContent = song.title;
     highlightActive(index);
+  });
+
+  // Initialize search functionality
+  setupSearch(data);
+}
+
+// Search functionality
+function setupSearch(data) {
+  const searchInput = document.getElementById("search-input");
+  const searchResults = document.getElementById("search-results");
+
+  if (!searchInput || !searchResults) return;
+
+  searchInput.addEventListener("input", () => {
+    const query = searchInput.value.trim();
+
+    if (query.length === 0) {
+      searchResults.classList.remove("show");
+      return;
+    }
+
+    // Debounce the search
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      performSearch(query, data);
+    }, 200);
+  });
+
+  searchInput.addEventListener("focus", () => {
+    if (searchInput.value.trim().length > 0) {
+      performSearch(searchInput.value.trim(), data);
+    }
+  });
+
+  // Close dropdown when clicking outside
+  document.addEventListener("click", (e) => {
+    if (e.target !== searchInput) {
+      searchResults.classList.remove("show");
+    }
+  });
+}
+
+function performSearch(query, data) {
+  const searchResults = document.getElementById("search-results");
+  searchResults.innerHTML = "";
+
+  if (!query) {
+    searchResults.classList.remove("show");
+    return;
+  }
+
+  // Search through all songs (not just current category)
+  const results = allSongs.filter(song =>
+    song.title.toLowerCase().includes(query.toLowerCase())
+  );
+
+  if (results.length === 0) {
+    const noResults = document.createElement("div");
+    noResults.className = "no-results";
+    noResults.textContent = "No songs found";
+    searchResults.appendChild(noResults);
+    searchResults.classList.add("show");
+    return;
+  }
+
+  results.forEach(song => {
+    const resultItem = document.createElement("div");
+    resultItem.className = "search-result-item";
+
+    // Find category name
+    const category = data.categories.find(cat => cat.id === song.category);
+    const categoryName = category ? category.name : "Unknown";
+
+    resultItem.innerHTML = `
+      <div class="result-title">${song.title}</div>
+      <div class="result-category">${categoryName}</div>
+    `;
+
+    // Find the index of this song in the current playlist
+    const songIndex = currentSongs.findIndex(s => s.title === song.title && s.filename === song.filename);
+
+    resultItem.addEventListener("click", () => {
+      if (songIndex !== -1) {
+        Player.loadTrack(songIndex);
+        highlightActiveSong(songIndex);
+
+        // Update the "now playing" title
+        document.getElementById("now-playing-title").textContent = song.title;
+
+        // Scroll the song into view
+        const songElement = document.querySelector(`.song-item[data-index="${songIndex}"]`);
+        if (songElement) {
+          songElement.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }
+
+      // Close the search dropdown
+      document.getElementById("search-results").classList.remove("show");
+      document.getElementById("search-input").value = "";
+    });
+
+    searchResults.appendChild(resultItem);
+  });
+
+  searchResults.classList.add("show");
+}
+
+function highlightActiveSong(index) {
+  document.querySelectorAll(".song-item").forEach((el) => {
+    el.classList.toggle("active", Number(el.dataset.index) === index);
   });
 }
