@@ -263,7 +263,9 @@ function performSearch(query, data) {
       if (isIndexPage) {
         // On index page, redirect to playlist page with the song's category and index
         const songCategory = song.category || "all";
-        const songIndex = currentSongs.findIndex(s => s.title === song.title && s.filename === song.filename);
+        // Find the song in the target category's song list
+        const targetSongs = songCategory === "all" ? data.songs : data.songs.filter(s => s.category === songCategory);
+        const songIndex = targetSongs.findIndex(s => s.title === song.title && s.filename === song.filename);
         window.location.href = `playlist.html?category=${encodeURIComponent(songCategory)}&play=${songIndex}`;
       } else {
         // On playlist page, play the song directly
