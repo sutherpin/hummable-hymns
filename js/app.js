@@ -160,6 +160,25 @@ function renderPlaylist(data) {
           if (songElement) {
             songElement.scrollIntoView({ behavior: "smooth", block: "center" });
           }
+
+          // Add click handler to play on user interaction
+          document.addEventListener('click', function playOnClick() {
+            console.log("User clicked, attempting to play...");
+            // Try to play the audio
+            const audioElement = document.getElementById('audio-player');
+            if (audioElement) {
+              audioElement.play().catch(e => {
+                console.log("Autoplay prevented, but user clicked:", e);
+                // Try to play anyway after user interaction
+                setTimeout(() => {
+                  audioElement.play().catch(e2 => {
+                    console.log("Still couldn't play after click:", e2);
+                  });
+                }, 100);
+              });
+            }
+            document.removeEventListener('click', playOnClick);
+          }, { once: true });
         } else {
           console.log("Player not ready yet, waiting...");
         }
