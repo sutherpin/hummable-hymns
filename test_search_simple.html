@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Search Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .search-container {
+            margin-bottom: 20px;
+        }
+        #search-input {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+        }
+        #search-input:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+        .search-results-dropdown {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-top: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+        }
+        .search-results-dropdown.show {
+            display: block;
+        }
+        .search-result-item {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            background: white;
+        }
+        .search-result-item:hover {
+            background: #f5f5f5;
+        }
+        .result-title {
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .result-category {
+            font-size: 14px;
+            color: #666;
+            font-style: italic;
+        }
+        .no-results {
+            padding: 12px;
+            text-align: center;
+            color: #999;
+            font-style: italic;
+        }
+        .success {
+            color: #4CAF50;
+            margin: 10px 0;
+        }
+        .instructions {
+            background: #f8f8f8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Search Feature Test</h1>
+
+    <div class="search-container">
+        <input type="text" id="search-input" placeholder="Search songs..." autocomplete="off">
+        <div id="search-results" class="search-results-dropdown"></div>
+    </div>
+
+    <div id="status" class="success">Ready to test!</div>
+
+    <div class="instructions">
+        <h3>Test Instructions:</h3>
+        <ol>
+            <li>Type "psalm" - should find "Psalm 8: How Majestic is Your Name"</li>
+            <li>Type "genesis" - should find "Genesis"</li>
+            <li>Type "love" - should find multiple results</li>
+            <li>Type "xyz123" - should show "No songs found"</li>
+            <li>Press Enter key - should trigger search</li>
+            <li>Click outside - should close dropdown</li>
+        </ol>
+    </div>
+
+    <script>
+        // Mock data - same structure as your songs.json
+        const mockData = {
+            categories: [
+                { id: "bible-summary", name: "Books of the Bible Collection" },
+                { id: "biblically-derived", name: "Biblically Derived Songs" },
+                { id: "seven-churches", name: "7 Churches Collection" },
+                { id: "inspirational", name: "Inspirational Collection" }
+            ],
+            songs: [
+                {
+                    title: "Psalm 8: How Majestic is Your Name",
+                    filename: "Psalm 8_ How Majestic is Your Name.mp3",
+                    category: "biblically-derived"
+                },
+                {
+                    title: "Genesis",
+                    filename: "Genesis T08 R9.4 C01 Final.mp3",
+                    category: "bible-summary"
+                },
+                {
+                    title: "Exodus",
+                    filename: "Exodus T11 C01 _Final.mp3",
+                    category: "bible-summary"
+                },
+                {
+                    title: "Love Chapter (1 Corinthians 13)",
+                    filename: "Love Chapter R9.6 C01_FInal.mp3",
+                    category: "biblically-derived"
+                },
+                {
+                    title: "Ephesians 4: Unity",
+                    filename: "Eph 4 Unity T21 R9.6 C03.mp3",
+                    category: "biblically-derived"
+                },
+                {
+                    title: "Ephesus",
+                    filename: "01 Ephesus Final.mp3",
+                    category: "seven-churches"
+                },
+                {
+                    title: "Stand Firm (A Song of Biblical Courage)",
+                    filename: "Stand Firm (A Song of Biblical Courage) Blues Rate9.4_Final.mp3",
+                    category: "biblically-derived"
+                }
+            ]
+        };
+
+        // Search functionality - same as in your app.js
+        let searchTimeout = null;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const searchInput = document.getElementById("search-input");
+            const searchResults = document.getElementById("search-results");
+
+            searchInput.addEventListener("input", () => {
+                const query = searchInput.value.trim();
+
+                if (query.length === 0) {
+                    searchResults.classList.remove("show");
+                    return;
+                }
+
+                // Debounce the search
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    performSearch(query, mockData);
+                }, 200);
+            });
+
+            searchInput.addEventListener("focus", () => {
+                if (searchInput.value.trim().length > 0) {
+                    performSearch(searchInput.value.trim(), mockData);
+                }
+            });
+
+            // Add Enter key support
+            searchInput.addEventListener("keydown", (e) => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    const query = searchInput.value.trim();
+                    if (query.length > 0) {
+                        performSearch(query, mockData);
+                    }
+                }
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener("click", (e) => {
+                if (e.target !== searchInput) {
+                    searchResults.classList.remove("show");
+                }
+            });
+
+            document.getElementById("status").textContent = "✅ Search is ready! Start typing...";
+        });
+
+        function performSearch(query, data) {
+            const searchResults = document.getElementById("search-results");
+            searchResults.innerHTML = "";
+
+            if (!query) {
+                searchResults.classList.remove("show");
+                return;
+            }
+
+            // Search through all songs
+            const results = data.songs.filter(song =>
+                song.title.toLowerCase().includes(query.toLowerCase())
+            );
+
+            if (results.length === 0) {
+                const noResults = document.createElement("div");
+                noResults.className = "no-results";
+                noResults.textContent = "No songs found";
+                searchResults.appendChild(noResults);
+                searchResults.classList.add("show");
+                return;
+            }
+
+            results.forEach(song => {
+                const resultItem = document.createElement("div");
+                resultItem.className = "search-result-item";
+
+                // Find category name
+                const category = data.categories.find(cat => cat.id === song.category);
+                const categoryName = category ? category.name : "Unknown";
+
+                resultItem.innerHTML = `
+                    <div class="result-title">${song.title}</div>
+                    <div class="result-category">${categoryName}</div>
+                `;
+
+                resultItem.addEventListener("click", () => {
+                    document.getElementById("status").textContent =
+                        `✅ Clicked: "${song.title}" (Category: ${categoryName})`;
+                    searchResults.classList.remove("show");
+                    searchInput.value = "";
+                });
+
+                searchResults.appendChild(resultItem);
+            });
+
+            searchResults.classList.add("show");
+        }
+    </script>
+</body>
+</html>
