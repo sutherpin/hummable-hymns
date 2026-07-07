@@ -418,6 +418,19 @@ a { color: var(--accent); text-decoration: none; }
 #play-pause-btn:hover { background: rgba(232,160,48,0.22); color: var(--accent); }
 #volume-bar { width: 80px; margin-left: 6px; }
 
+#shuffle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#shuffle-btn svg path {
+  fill: currentColor;
+}
+#shuffle-btn.active {
+  color: var(--accent);
+  background: rgba(232,160,48,0.12);
+}
+
 input[type="range"] {
   -webkit-appearance: none;
   height: 4px;

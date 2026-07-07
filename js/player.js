@@ -23,15 +23,81 @@ function formatTime(seconds) {
   return `${m}:${s}`;
 }
 
+function shuffleInPlace(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
 const Player = (() => {
   let audio;
   let playlist = [];
   let currentIndex = -1;
   let onTrackChange = () => {};
   let lyricsBtn, lyricsPanel, lyricsPanelBody;
+  let shuffleBtn;
+  let shuffleEnabled = false;
+  let shuffleOrder = [];
+  let shufflePosition = 0;
   let lyricsRequestId = 0; // guards against a slow/old fetch overwriting a newer track's lyrics
   let retryCount = 0;
   const MAX_RETRIES = 3;
+
+  function buildShuffleOrder(pinnedIndex) {
+    shuffleOrder = Array.from({ length: playlist.length }, (_, i) => i);
+    if (playlist.length <= 1) {
+      shufflePosition = 0;
+      return;
+    }
+
+    shuffleInPlace(shuffleOrder);
+
+    if (pinnedIndex != null && pinnedIndex >= 0) {
+      const pos = shuffleOrder.indexOf(pinnedIndex);
+      if (pos > 0) {
+        shuffleOrder.splice(pos, 1);
+        shuffleOrder.unshift(pinnedIndex);
+      }
+      shufflePosition = 0;
+      return;
+    }
+
+    shufflePosition = 0;
+  }
+
+  function buildNextShuffleCycle(avoidIndex) {
+    buildShuffleOrder(null);
+    if (
+      avoidIndex != null &&
+      shuffleOrder.length > 1 &&
+      shuffleOrder[0] === avoidIndex
+    ) {
+      [shuffleOrder[0], shuffleOrder[1]] = [shuffleOrder[1], shuffleOrder[0]];
+    }
+    shufflePosition = 0;
+  }
+
+  function updateShuffleButton() {
+    if (!shuffleBtn) return;
+    shuffleBtn.classList.toggle("active", shuffleEnabled);
+    shuffleBtn.setAttribute("aria-pressed", shuffleEnabled ? "true" : "false");
+    shuffleBtn.setAttribute(
+      "aria-label",
+      shuffleEnabled ? "Shuffle on" : "Shuffle off"
+    );
+  }
+
+  function toggleShuffle() {
+    shuffleEnabled = !shuffleEnabled;
+    updateShuffleButton();
+
+    if (shuffleEnabled) {
+      const pinned = currentIndex >= 0 ? currentIndex : null;
+      buildShuffleOrder(pinned);
+    }
+  }
 
   function init() {
     audio = document.getElementById("audio-player");
@@ -46,10 +112,14 @@ const Player = (() => {
     lyricsBtn = document.getElementById("lyrics-btn");
     lyricsPanel = document.getElementById("lyrics-panel");
     lyricsPanelBody = document.getElementById("lyrics-panel-body");
+    shuffleBtn = document.getElementById("shuffle-btn");
 
     playPauseBtn.addEventListener("click", togglePlay);
     prevBtn.addEventListener("click", playPrev);
     nextBtn.addEventListener("click", playNext);
+    if (shuffleBtn) {
+      shuffleBtn.addEventListener("click", toggleShuffle);
+    }
 
     // Expanding/collapsing lyrics is purely a CSS/DOM toggle — it never
     // touches `audio`, so play/pause/seek/volume continue uninterrupted.
@@ -108,12 +178,19 @@ const Player = (() => {
   function setPlaylist(songs, startIndex, trackChangeCallback) {
     playlist = songs;
     onTrackChange = trackChangeCallback || (() => {});
+    if (shuffleEnabled) {
+      buildShuffleOrder(startIndex >= 0 ? startIndex : null);
+    }
     loadTrack(startIndex);
   }
 
   function loadTrack(index) {
     if (index < 0 || index >= playlist.length) return;
     currentIndex = index;
+    if (shuffleEnabled) {
+      const pos = shuffleOrder.indexOf(index);
+      if (pos !== -1) shufflePosition = pos;
+    }
     retryCount = 0;
     const song = playlist[currentIndex];
     audio.src = buildSongUrl(song.filename);
@@ -185,7 +262,14 @@ const Player = (() => {
 
   function togglePlay() {
     if (currentIndex === -1 && playlist.length > 0) {
-      loadTrack(0);
+      if (shuffleEnabled) {
+        if (shuffleOrder.length !== playlist.length) {
+          buildShuffleOrder(null);
+        }
+        loadTrack(shuffleOrder[0]);
+      } else {
+        loadTrack(0);
+      }
       return;
     }
     if (audio.paused) {
@@ -197,15 +281,52 @@ const Player = (() => {
 
   function playNext() {
     if (playlist.length === 0) return;
+
+    if (shuffleEnabled) {
+      if (shuffleOrder.length !== playlist.length) {
+        buildShuffleOrder(currentIndex >= 0 ? currentIndex : null);
+      }
+
+      if (shufflePosition + 1 >= shuffleOrder.length) {
+        buildNextShuffleCycle(shuffleOrder[shufflePosition]);
+      } else {
+        shufflePosition++;
+      }
+
+      loadTrack(shuffleOrder[shufflePosition]);
+      return;
+    }
+
     const next = (currentIndex + 1) % playlist.length;
     loadTrack(next);
   }
 
   function playPrev() {
     if (playlist.length === 0) return;
+
+    if (shuffleEnabled) {
+      if (shuffleOrder.length !== playlist.length) {
+        buildShuffleOrder(currentIndex >= 0 ? currentIndex : null);
+      }
+
+      shufflePosition =
+        (shufflePosition - 1 + shuffleOrder.length) % shuffleOrder.length;
+      loadTrack(shuffleOrder[shufflePosition]);
+      return;
+    }
+
     const prev = (currentIndex - 1 + playlist.length) % playlist.length;
     loadTrack(prev);
   }
 
-  return { init, setPlaylist, loadTrack, togglePlay, playNext, playPrev };
+  return {
+    init,
+    setPlaylist,
+    loadTrack,
+    togglePlay,
+    playNext,
+    playPrev,
+    toggleShuffle,
+    isShuffleEnabled: () => shuffleEnabled,
+  };
 })();
