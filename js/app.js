@@ -146,15 +146,19 @@ function renderPlaylist(data) {
   if (songToPlay !== null) {
     const playIndex = parseInt(songToPlay);
     if (!isNaN(playIndex) && playIndex >= 0 && playIndex < songs.length) {
-      setTimeout(() => {
-        Player.loadTrack(playIndex);
-        highlightActive(playIndex);
-        // Scroll the song into view
-        const songElement = document.querySelector(`.song-item[data-index="${playIndex}"]`);
-        if (songElement) {
-          songElement.scrollIntoView({ behavior: "smooth", block: "center" });
+      // Wait for Player to be fully initialized
+      const checkPlayerReady = setInterval(() => {
+        if (typeof Player.loadTrack === 'function') {
+          clearInterval(checkPlayerReady);
+          Player.loadTrack(playIndex);
+          highlightActive(playIndex);
+          // Scroll the song into view
+          const songElement = document.querySelector(`.song-item[data-index="${playIndex}"]`);
+          if (songElement) {
+            songElement.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
         }
-      }, 500); // Small delay to ensure player is ready
+      }, 100); // Check every 100ms until Player is ready
     }
   }
 
