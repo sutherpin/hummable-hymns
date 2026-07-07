@@ -43,6 +43,12 @@
       <span id="duration-time">0:00</span>
     </div>
     <div class="player-controls">
+      <button id="shuffle-btn" aria-label="Shuffle off" aria-pressed="false" title="Shuffle" fill="currentColor">
+        <svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+            <path d="M13 1H12V3H10.5858L7 6.58579L3.41421 3H0V5H2.58579L5.58579 8L2.58579 11H0V13H3.41421L11.4142 5H12V7H13L16 4L13 1Z"/>
+            <path d="M12 9H13L16 12L13 15H12V13H10.5858L8.41421 10.8284L9.82843 9.41421L11.4142 11H12V9Z"/>
+        </svg>
+      </button>
       <button id="prev-btn" aria-label="Previous">&#9664;&#9664;</button>
       <button id="play-pause-btn" aria-label="Play">&#9654;</button>
       <button id="next-btn" aria-label="Next">&#9654;&#9654;</button>
@@ -52,7 +58,7 @@
     <audio id="audio-player" preload="none"></audio>
   </div>
 
-  <script src="js/player.js?v=4"></script>
+  <script src="js/player.js?v=5"></script>
   <script src="js/app.js?v=4"></script>
 </body>
 </html>
