@@ -146,10 +146,13 @@ function renderPlaylist(data) {
   if (songToPlay !== null) {
     const playIndex = parseInt(songToPlay);
     if (!isNaN(playIndex) && playIndex >= 0 && playIndex < songs.length) {
+      console.log(`Auto-playing song at index ${playIndex}`);
       // Wait for Player to be fully initialized
       const checkPlayerReady = setInterval(() => {
+        console.log("Checking if Player is ready...");
         if (typeof Player.loadTrack === 'function') {
           clearInterval(checkPlayerReady);
+          console.log("Player is ready, loading track...");
           Player.loadTrack(playIndex);
           highlightActive(playIndex);
           // Scroll the song into view
@@ -157,6 +160,8 @@ function renderPlaylist(data) {
           if (songElement) {
             songElement.scrollIntoView({ behavior: "smooth", block: "center" });
           }
+        } else {
+          console.log("Player not ready yet, waiting...");
         }
       }, 100); // Check every 100ms until Player is ready
     }
