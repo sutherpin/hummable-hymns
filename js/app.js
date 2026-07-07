@@ -33,6 +33,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (document.getElementById("category-grid")) {
         renderCategoryGrid(data);
+        // Initialize search functionality on index page
+        setupSearch(data);
       } else if (document.getElementById("song-list")) {
         renderPlaylist(data);
       }
@@ -84,6 +86,7 @@ function makeCategoryCard(id, name, count, isAll, isNew) {
 let allSongs = [];
 let currentSongs = [];
 let searchTimeout = null;
+let searchData = null;
 
 function renderPlaylist(data) {
   const params = new URLSearchParams(window.location.search);
@@ -147,7 +150,15 @@ function setupSearch(data) {
   const searchInput = document.getElementById("search-input");
   const searchResults = document.getElementById("search-results");
 
-  if (!searchInput || !searchResults) return;
+  if (!searchInput || !searchResults) {
+    return;
+  }
+
+  // Populate allSongs if not already populated (for index page)
+  if (allSongs.length === 0) {
+    allSongs = data.songs;
+    currentSongs = data.songs; // On index page, all songs are available
+  }
 
   searchInput.addEventListener("input", () => {
     const query = searchInput.value.trim();
@@ -167,6 +178,17 @@ function setupSearch(data) {
   searchInput.addEventListener("focus", () => {
     if (searchInput.value.trim().length > 0) {
       performSearch(searchInput.value.trim(), data);
+    }
+  });
+
+  // Add Enter key support
+  searchInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const query = searchInput.value.trim();
+      if (query.length > 0) {
+        performSearch(query, data);
+      }
     }
   });
 
@@ -217,18 +239,28 @@ function performSearch(query, data) {
     // Find the index of this song in the current playlist
     const songIndex = currentSongs.findIndex(s => s.title === song.title && s.filename === song.filename);
 
+    // Check if we're on index page or playlist page
+    const isIndexPage = document.getElementById("category-grid") !== null;
+
     resultItem.addEventListener("click", () => {
-      if (songIndex !== -1) {
-        Player.loadTrack(songIndex);
-        highlightActiveSong(songIndex);
+      if (isIndexPage) {
+        // On index page, redirect to playlist page with the song's category
+        const songCategory = song.category || "all";
+        window.location.href = `playlist.html?category=${encodeURIComponent(songCategory)}`;
+      } else {
+        // On playlist page, play the song directly
+        if (songIndex !== -1) {
+          Player.loadTrack(songIndex);
+          highlightActiveSong(songIndex);
 
-        // Update the "now playing" title
-        document.getElementById("now-playing-title").textContent = song.title;
+          // Update the "now playing" title
+          document.getElementById("now-playing-title").textContent = song.title;
 
-        // Scroll the song into view
-        const songElement = document.querySelector(`.song-item[data-index="${songIndex}"]`);
-        if (songElement) {
-          songElement.scrollIntoView({ behavior: "smooth", block: "center" });
+          // Scroll the song into view
+          const songElement = document.querySelector(`.song-item[data-index="${songIndex}"]`);
+          if (songElement) {
+            songElement.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
         }
       }
 

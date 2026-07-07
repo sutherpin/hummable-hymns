@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Debug Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        #results {
+            margin-top: 20px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .result-item {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        .result-item:hover {
+            background: #e9e9e9;
+        }
+        .error {
+            color: red;
+        }
+        .success {
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Search Debug Test</h1>
+        <p>This page tests the search functionality in isolation.</p>
+
+        <input type="text" id="test-search" placeholder="Type to search...">
+        <button id="test-button">Search</button>
+
+        <div id="results"></div>
+
+        <h3>Test Cases:</h3>
+        <ul>
+            <li><strong>Test 1:</strong> Type "psalm" - should find "Psalm 8: How Majestic is Your Name"</li>
+            <li><strong>Test 2:</strong> Type "genesis" - should find "Genesis"</li>
+            <li><strong>Test 3:</strong> Type "love" - should find multiple results</li>
+            <li><strong>Test 4:</strong> Type "xyz123" - should show "No results"</li>
+        </ul>
+    </div>
+
+    <script>
+        // Mock data
+        const mockData = {
+            categories: [
+                { id: "bible-summary", name: "Books of the Bible Collection" },
+                { id: "biblically-derived", name: "Biblically Derived Songs" }
+            ],
+            songs: [
+                {
+                    title: "Psalm 8: How Majestic is Your Name",
+                    filename: "Psalm 8_ How Majestic is Your Name.mp3",
+                    category: "biblically-derived"
+                },
+                {
+                    title: "Genesis",
+                    filename: "Genesis T08 R9.4 C01 Final.mp3",
+                    category: "bible-summary"
+                },
+                {
+                    title: "Love Chapter (1 Corinthians 13)",
+                    filename: "Love Chapter R9.6 C01_FInal.mp3",
+                    category: "biblically-derived"
+                },
+                {
+                    title: "Ephesians 4: Unity",
+                    filename: "Eph 4 Unity T21 R9.6 C03.mp3",
+                    category: "biblically-derived"
+                }
+            ]
+        };
+
+        // Test search function
+        function testSearch(query) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = `<p><strong>Searching for:</strong> "${query}"</p>`;
+
+            if (!query || query.trim() === '') {
+                resultsDiv.innerHTML += `<p class="error">Please enter a search term</p>`;
+                return;
+            }
+
+            // Simple search - case insensitive
+            const results = mockData.songs.filter(song =>
+                song.title.toLowerCase().includes(query.toLowerCase())
+            );
+
+            if (results.length === 0) {
+                resultsDiv.innerHTML += `<p class="error">No songs found for "${query}"</p>`;
+                return;
+            }
+
+            resultsDiv.innerHTML += `<p class="success">Found ${results.length} result(s):</p>`;
+
+            results.forEach(song => {
+                const category = mockData.categories.find(cat => cat.id === song.category);
+                const categoryName = category ? category.name : "Unknown";
+
+                resultsDiv.innerHTML += `
+                    <div class="result-item">
+                        <strong>${song.title}</strong><br>
+                        <small>${categoryName}</small>
+                    </div>
+                `;
+            });
+        }
+
+        // Event listeners
+        document.getElementById('test-search').addEventListener('input', function(e) {
+            if (e.target.value.length >= 2) {
+                testSearch(e.target.value);
+            } else {
+                document.getElementById('results').innerHTML = '';
+            }
+        });
+
+        document.getElementById('test-button').addEventListener('click', function() {
+            const query = document.getElementById('test-search').value;
+            testSearch(query);
+        });
+
+        // Run initial tests
+        console.log("Search functionality test ready");
+        console.log("Available songs:", mockData.songs.map(s => s.title));
+    </script>
+</body>
+</html>
