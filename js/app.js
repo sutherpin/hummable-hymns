@@ -14,6 +14,8 @@ function isRecent(dateStr) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  console.log("app.js loaded successfully");
+
   fetch("data/songs.json")
     .then((res) => res.json())
     .then((data) => {
