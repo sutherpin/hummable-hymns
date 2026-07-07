@@ -35,7 +35,7 @@ a { color: var(--accent); text-decoration: none; }
   background: var(--gradient-header);
   border-bottom: 1px solid rgba(232,160,48,0.15);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* Search container */
@@ -76,7 +76,7 @@ a { color: var(--accent); text-decoration: none; }
   border-radius: var(--radius-sm);
   margin-top: 8px;
   display: none;
-  z-index: 100;
+  z-index: 10000;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
