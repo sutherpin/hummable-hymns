@@ -1,6 +1,7 @@
 /* player.js
    Lightweight wrapper around the native <audio> element.
-   Exposes a global `Player` object used by app.js on playlist.html.
+   Exposes a global `Player` object used by app.js in the playlist view
+   of the single-page app (index.html).
 */
 
 const R2_BASE_URL = "https://pub-d1176e54922d4c95964ec94fbb1442fa.r2.dev";
@@ -45,9 +46,12 @@ const Player = (() => {
   let retryCount = 0;
   const MAX_RETRIES = 3;
   let audioContext;
+  let initialized = false;
 
   // Ensure audio element persists
   function ensureAudioElement() {
+    if (audio) return;
+    audio = document.getElementById('audio-player');
     if (!audio) {
       audio = document.createElement('audio');
       audio.id = 'audio-player';
@@ -111,6 +115,9 @@ const Player = (() => {
   }
 
   function init() {
+    if (initialized) return;
+    initialized = true;
+
     ensureAudioElement();
     audio = document.getElementById("audio-player");
     const playPauseBtn = document.getElementById("play-pause-btn");
@@ -322,6 +329,19 @@ const Player = (() => {
     loadTrack(prev);
   }
 
+  // The currently playing/loaded song, independent of whichever playlist
+  // view happens to be rendered right now. Used so navigating between
+  // categories doesn't disturb playback or misreport what's playing.
+  function getCurrentSong() {
+    return currentIndex >= 0 && currentIndex < playlist.length
+      ? playlist[currentIndex]
+      : null;
+  }
+
+  function isPlaying() {
+    return !!audio && !audio.paused;
+  }
+
   return {
     init,
     setPlaylist,
@@ -331,5 +351,7 @@ const Player = (() => {
     playPrev,
     toggleShuffle,
     isShuffleEnabled: () => shuffleEnabled,
+    getCurrentSong,
+    isPlaying,
   };
 })();
