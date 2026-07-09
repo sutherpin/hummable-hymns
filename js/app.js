@@ -209,11 +209,6 @@ function renderPlaylist(data, categoryId, songToPlay) {
 
   revealPlayerBar();
 
-  // Capture whatever is actually playing *before* we swap the playlist
-  // context below — setPlaylist() overwrites Player's internal list, and
-  // after that currentIndex would be looked up against the wrong array.
-  const current = Player.getCurrentSong();
-
   // Reassign the playlist context for prev/next/shuffle, but don't touch
   // whatever is currently playing (startIndex -1 is a no-op for playback).
   Player.setPlaylist(songs, -1, (index, song) => {
@@ -222,7 +217,10 @@ function renderPlaylist(data, categoryId, songToPlay) {
   });
 
   // If the song that's already playing happens to be in this category,
-  // keep it highlighted instead of leaving nothing selected.
+  // keep it highlighted instead of leaving nothing selected. getCurrentSong()
+  // always reports the real playing track, regardless of which category is
+  // currently displayed.
+  const current = Player.getCurrentSong();
   if (current) {
     const idx = songs.findIndex((s) => s.filename === current.filename);
     if (idx !== -1) highlightActive(idx);
