@@ -45,30 +45,25 @@ const Player = (() => {
   let retryCount = 0;
   const MAX_RETRIES = 3;
 
-  // Persist player state using sessionStorage
+  // Save player state to sessionStorage
   function savePlayerState() {
-    if (sessionStorage) {
-      sessionStorage.setItem('playerState', JSON.stringify({
-        playlist,
-        currentIndex,
-        shuffleEnabled,
-        shuffleOrder,
-        shufflePosition
-      }));
+    if (sessionStorage && audio) {
+      sessionStorage.setItem('playerTrack', currentIndex);
+      sessionStorage.setItem('playerPlaylist', JSON.stringify(playlist));
+      sessionStorage.setItem('playerShuffle', shuffleEnabled);
     }
   }
 
+  // Load player state from sessionStorage
   function loadPlayerState() {
     if (sessionStorage) {
-      const state = sessionStorage.getItem('playerState');
-      if (state) {
-        const parsedState = JSON.parse(state);
-        playlist = parsedState.playlist;
-        currentIndex = parsedState.currentIndex;
-        shuffleEnabled = parsedState.shuffleEnabled;
-        shuffleOrder = parsedState.shuffleOrder || [];
-        shufflePosition = parsedState.shufflePosition || 0;
-      }
+      const track = sessionStorage.getItem('playerTrack');
+      const playlistData = sessionStorage.getItem('playerPlaylist');
+      const shuffle = sessionStorage.getItem('playerShuffle');
+
+      if (track !== null) currentIndex = parseInt(track);
+      if (playlistData) playlist = JSON.parse(playlistData);
+      if (shuffle !== null) shuffleEnabled = shuffle === 'true';
     }
   }
 
