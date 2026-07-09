@@ -128,6 +128,9 @@ function renderPlaylist(data) {
     });
   }
 
+  // Load player state from sessionStorage if available
+  Player.loadPlayerState();
+
   Player.init();
   Player.setPlaylist(songs, -1, (index, song) => {
     document.getElementById("now-playing-title").textContent = song.title;
@@ -150,6 +153,11 @@ function renderPlaylist(data) {
       }, 100);
     }
   }
+
+  // Save player state before unloading the page
+  window.addEventListener("beforeunload", () => {
+    Player.savePlayerState();
+  });
 
   setupSearch(data);
 }

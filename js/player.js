@@ -41,9 +41,36 @@ const Player = (() => {
   let shuffleEnabled = false;
   let shuffleOrder = [];
   let shufflePosition = 0;
-  let lyricsRequestId = 0; // guards against a slow/old fetch overwriting a newer track's lyrics
+  let lyricsRequestId = 0;
   let retryCount = 0;
   const MAX_RETRIES = 3;
+
+  // Persist player state using sessionStorage
+  function savePlayerState() {
+    if (sessionStorage) {
+      sessionStorage.setItem('playerState', JSON.stringify({
+        playlist,
+        currentIndex,
+        shuffleEnabled,
+        shuffleOrder,
+        shufflePosition
+      }));
+    }
+  }
+
+  function loadPlayerState() {
+    if (sessionStorage) {
+      const state = sessionStorage.getItem('playerState');
+      if (state) {
+        const parsedState = JSON.parse(state);
+        playlist = parsedState.playlist;
+        currentIndex = parsedState.currentIndex;
+        shuffleEnabled = parsedState.shuffleEnabled;
+        shuffleOrder = parsedState.shuffleOrder || [];
+        shufflePosition = parsedState.shufflePosition || 0;
+      }
+    }
+  }
 
   function buildShuffleOrder(pinnedIndex) {
     shuffleOrder = Array.from({ length: playlist.length }, (_, i) => i);
