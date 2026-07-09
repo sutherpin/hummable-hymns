@@ -33,7 +33,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (document.getElementById("category-grid")) {
         renderCategoryGrid(data);
-        // Initialize search functionality on index page
         setupSearch(data);
       } else if (document.getElementById("song-list")) {
         renderPlaylist(data);
@@ -47,24 +46,19 @@ document.addEventListener("DOMContentLoaded", () => {
 function renderCategoryGrid(data) {
   const grid = document.getElementById("category-grid");
 
-  // Count songs per real category
   const counts = {};
   data.songs.forEach((song) => {
     counts[song.category] = (counts[song.category] || 0) + 1;
   });
 
-  // Check for recent songs (New Additions)
   const recentSongs = data.songs.filter((s) => isRecent(s.dateAdded));
 
-  // All Songs card
   grid.appendChild(makeCategoryCard("all", "All Songs", data.songs.length, true));
 
-  // New Additions card — only shown if there are recent songs
   if (recentSongs.length > 0) {
     grid.appendChild(makeCategoryCard("new-additions", "New Additions", recentSongs.length, false, true));
   }
 
-  // Regular category cards
   data.categories.forEach((cat) => {
     const count = counts[cat.id] || 0;
     grid.appendChild(makeCategoryCard(cat.id, cat.name, count, false, false));
@@ -107,7 +101,6 @@ function renderPlaylist(data) {
     songs = data.songs.filter((s) => s.category === categoryId);
   }
 
-  // Store all songs and current songs for search functionality
   allSongs = data.songs;
   currentSongs = songs;
 
@@ -142,55 +135,26 @@ function renderPlaylist(data) {
     highlightActive(index);
   });
 
-  // Auto-play song if specified in URL parameter
   if (songToPlay !== null) {
     const playIndex = parseInt(songToPlay);
     if (!isNaN(playIndex) && playIndex >= 0 && playIndex < songs.length) {
-      console.log(`Auto-playing song at index ${playIndex}`);
-      // Wait for Player to be fully initialized
       const checkPlayerReady = setInterval(() => {
-        console.log("Checking if Player is ready...");
-        if (typeof Player.loadTrack === 'function') {
+        if (Player && Player.loadTrack && Player.setPlaylist) {
           clearInterval(checkPlayerReady);
-          console.log("Player is ready, loading track...");
           Player.loadTrack(playIndex);
           highlightActive(playIndex);
-          // Scroll the song into view
           const songElement = document.querySelector(`.song-item[data-index="${playIndex}"]`);
           if (songElement) {
             songElement.scrollIntoView({ behavior: "smooth", block: "center" });
           }
-
-          // Add click handler to play on user interaction
-          document.addEventListener('click', function playOnClick() {
-            console.log("User clicked, attempting to play...");
-            // Try to play the audio
-            const audioElement = document.getElementById('audio-player');
-            if (audioElement) {
-              audioElement.play().catch(e => {
-                console.log("Autoplay prevented, but user clicked:", e);
-                // Try to play anyway after user interaction
-                setTimeout(() => {
-                  audioElement.play().catch(e2 => {
-                    console.log("Still couldn't play after click:", e2);
-                  });
-                }, 100);
-              });
-            }
-            document.removeEventListener('click', playOnClick);
-          }, { once: true });
-        } else {
-          console.log("Player not ready yet, waiting...");
         }
-      }, 100); // Check every 100ms until Player is ready
+      }, 100);
     }
   }
 
-  // Initialize search functionality
   setupSearch(data);
 }
 
-// Search functionality
 function setupSearch(data) {
   const searchInput = document.getElementById("search-input");
   const searchResults = document.getElementById("search-results");
@@ -199,21 +163,17 @@ function setupSearch(data) {
     return;
   }
 
-  // Populate allSongs if not already populated (for index page)
   if (allSongs.length === 0) {
     allSongs = data.songs;
-    currentSongs = data.songs; // On index page, all songs are available
+    currentSongs = data.songs;
   }
 
   searchInput.addEventListener("input", () => {
     const query = searchInput.value.trim();
-
     if (query.length === 0) {
       searchResults.classList.remove("show");
       return;
     }
-
-    // Debounce the search
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
       performSearch(query, data);
@@ -226,7 +186,6 @@ function setupSearch(data) {
     }
   });
 
-  // Add Enter key support
   searchInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -237,7 +196,6 @@ function setupSearch(data) {
     }
   });
 
-  // Close dropdown when clicking outside
   document.addEventListener("click", (e) => {
     if (e.target !== searchInput) {
       searchResults.classList.remove("show");
@@ -254,7 +212,6 @@ function performSearch(query, data) {
     return;
   }
 
-  // Search through all songs (not just current category)
   const results = allSongs.filter(song =>
     song.title.toLowerCase().includes(query.toLowerCase())
   );
@@ -272,7 +229,6 @@ function performSearch(query, data) {
     const resultItem = document.createElement("div");
     resultItem.className = "search-result-item";
 
-    // Find category name
     const category = data.categories.find(cat => cat.id === song.category);
     const categoryName = category ? category.name : "Unknown";
 
@@ -281,35 +237,30 @@ function performSearch(query, data) {
       <div class="result-category">${categoryName}</div>
     `;
 
-    // Find the index of this song in the current playlist
     const songIndex = currentSongs.findIndex(s => s.title === song.title && s.filename === song.filename);
 
-    // Check if we're on index page or playlist page
     const isIndexPage = document.getElementById("category-grid") !== null;
 
     resultItem.addEventListener("click", () => {
       if (isIndexPage) {
-        // On index page, redirect to playlist page with the song's category and index
         const songCategory = song.category || "all";
-        // Find the song in the target category's song list
         const targetSongs = songCategory === "all" ? data.songs : data.songs.filter(s => s.category === songCategory);
         const songIndexInTarget = targetSongs.findIndex(s => s.title === song.title && s.filename === song.filename);
         window.location.href = `playlist.html?category=${encodeURIComponent(songCategory)}&play=${songIndexInTarget}`;
       } else {
-        // On playlist page, play the song directly
         if (songIndex !== -1) {
-          // Ensure Player is initialized before loading track
-          if (!Player.loadTrack) {
+          // Ensure Player is fully initialized and ready
+          if (!Player || !Player.loadTrack || !Player.setPlaylist) {
             console.error("Player not ready, initializing now...");
             Player.init();
+            Player.setPlaylist(currentSongs, -1, (index, song) => {
+              document.getElementById("now-playing-title").textContent = song.title;
+              highlightActiveSong(index);
+            });
           }
           Player.loadTrack(songIndex);
           highlightActiveSong(songIndex);
-
-          // Update the "now playing" title
           document.getElementById("now-playing-title").textContent = song.title;
-
-          // Scroll the song into view
           const songElement = document.querySelector(`.song-item[data-index="${songIndex}"]`);
           if (songElement) {
             songElement.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -317,7 +268,6 @@ function performSearch(query, data) {
         }
       }
 
-      // Close the search dropdown
       document.getElementById("search-results").classList.remove("show");
       document.getElementById("search-input").value = "";
     });
