@@ -80,7 +80,6 @@ function makeCategoryCard(id, name, count, isAll, isNew) {
 let allSongs = [];
 let currentSongs = [];
 let searchTimeout = null;
-let searchData = null;
 
 function renderPlaylist(data) {
   const params = new URLSearchParams(window.location.search);
@@ -139,7 +138,7 @@ function renderPlaylist(data) {
     const playIndex = parseInt(songToPlay);
     if (!isNaN(playIndex) && playIndex >= 0 && playIndex < songs.length) {
       const checkPlayerReady = setInterval(() => {
-        if (Player && Player.loadTrack && Player.setPlaylist) {
+        if (Player && Player.loadTrack) {
           clearInterval(checkPlayerReady);
           Player.loadTrack(playIndex);
           highlightActive(playIndex);
@@ -165,7 +164,6 @@ function setupSearch(data) {
 
   if (allSongs.length === 0) {
     allSongs = data.songs;
-    currentSongs = data.songs;
   }
 
   searchInput.addEventListener("input", () => {
@@ -237,34 +235,30 @@ function performSearch(query, data) {
       <div class="result-category">${categoryName}</div>
     `;
 
-    const songIndex = currentSongs.findIndex(s => s.title === song.title && s.filename === song.filename);
-
-    const isIndexPage = document.getElementById("category-grid") !== null;
+    const songIndexInCurrentPlaylist = currentSongs.findIndex(s => s.title === song.title && s.filename === song.filename);
+    const songCategory = song.category || "all";
 
     resultItem.addEventListener("click", () => {
-      if (isIndexPage) {
-        const songCategory = song.category || "all";
+      if (document.getElementById("category-grid")) {
+        // On index page, redirect to playlist page with the song's category and index
         const targetSongs = songCategory === "all" ? data.songs : data.songs.filter(s => s.category === songCategory);
         const songIndexInTarget = targetSongs.findIndex(s => s.title === song.title && s.filename === song.filename);
         window.location.href = `playlist.html?category=${encodeURIComponent(songCategory)}&play=${songIndexInTarget}`;
       } else {
-        if (songIndex !== -1) {
-          // Ensure Player is fully initialized and ready
-          if (!Player || !Player.loadTrack || !Player.setPlaylist) {
-            console.error("Player not ready, initializing now...");
-            Player.init();
-            Player.setPlaylist(currentSongs, -1, (index, song) => {
-              document.getElementById("now-playing-title").textContent = song.title;
-              highlightActiveSong(index);
-            });
-          }
-          Player.loadTrack(songIndex);
-          highlightActiveSong(songIndex);
+        // On playlist page, play the song directly
+        if (songIndexInCurrentPlaylist !== -1) {
+          Player.loadTrack(songIndexInCurrentPlaylist);
+          highlightActiveSong(songIndexInCurrentPlaylist);
           document.getElementById("now-playing-title").textContent = song.title;
-          const songElement = document.querySelector(`.song-item[data-index="${songIndex}"]`);
+          const songElement = document.querySelector(`.song-item[data-index="${songIndexInCurrentPlaylist}"]`);
           if (songElement) {
             songElement.scrollIntoView({ behavior: "smooth", block: "center" });
           }
+        } else {
+          // Redirect to the correct playlist if the song is not in the current playlist
+          const targetSongs = songCategory === "all" ? data.songs : data.songs.filter(s => s.category === songCategory);
+          const songIndexInTarget = targetSongs.findIndex(s => s.title === song.title && s.filename === song.filename);
+          window.location.href = `playlist.html?category=${encodeURIComponent(songCategory)}&play=${songIndexInTarget}`;
         }
       }
 
