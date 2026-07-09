@@ -128,9 +128,6 @@ function renderPlaylist(data) {
     });
   }
 
-  // Load player state from sessionStorage if available
-  Player.loadPlayerState();
-
   Player.init();
   Player.setPlaylist(songs, -1, (index, song) => {
     document.getElementById("now-playing-title").textContent = song.title;
@@ -140,24 +137,14 @@ function renderPlaylist(data) {
   if (songToPlay !== null) {
     const playIndex = parseInt(songToPlay);
     if (!isNaN(playIndex) && playIndex >= 0 && playIndex < songs.length) {
-      const checkPlayerReady = setInterval(() => {
-        if (Player && Player.loadTrack) {
-          clearInterval(checkPlayerReady);
-          Player.loadTrack(playIndex);
-          highlightActive(playIndex);
-          const songElement = document.querySelector(`.song-item[data-index="${playIndex}"]`);
-          if (songElement) {
-            songElement.scrollIntoView({ behavior: "smooth", block: "center" });
-          }
-        }
-      }, 100);
+      Player.loadTrack(playIndex);
+      highlightActive(playIndex);
+      const songElement = document.querySelector(`.song-item[data-index="${playIndex}"]`);
+      if (songElement) {
+        songElement.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
     }
   }
-
-  // Save player state before unloading the page
-  window.addEventListener("beforeunload", () => {
-    Player.savePlayerState();
-  });
 
   setupSearch(data);
 }
@@ -248,12 +235,10 @@ function performSearch(query, data) {
 
     resultItem.addEventListener("click", () => {
       if (document.getElementById("category-grid")) {
-        // On index page, redirect to playlist page with the song's category and index
         const targetSongs = songCategory === "all" ? data.songs : data.songs.filter(s => s.category === songCategory);
         const songIndexInTarget = targetSongs.findIndex(s => s.title === song.title && s.filename === song.filename);
         window.location.href = `playlist.html?category=${encodeURIComponent(songCategory)}&play=${songIndexInTarget}`;
       } else {
-        // On playlist page, play the song directly
         if (songIndexInCurrentPlaylist !== -1) {
           Player.loadTrack(songIndexInCurrentPlaylist);
           highlightActiveSong(songIndexInCurrentPlaylist);
@@ -263,7 +248,6 @@ function performSearch(query, data) {
             songElement.scrollIntoView({ behavior: "smooth", block: "center" });
           }
         } else {
-          // Redirect to the correct playlist if the song is not in the current playlist
           const targetSongs = songCategory === "all" ? data.songs : data.songs.filter(s => s.category === songCategory);
           const songIndexInTarget = targetSongs.findIndex(s => s.title === song.title && s.filename === song.filename);
           window.location.href = `playlist.html?category=${encodeURIComponent(songCategory)}&play=${songIndexInTarget}`;

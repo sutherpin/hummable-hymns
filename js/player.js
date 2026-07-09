@@ -44,26 +44,15 @@ const Player = (() => {
   let lyricsRequestId = 0;
   let retryCount = 0;
   const MAX_RETRIES = 3;
+  let audioContext;
 
-  // Save player state to sessionStorage
-  function savePlayerState() {
-    if (sessionStorage && audio) {
-      sessionStorage.setItem('playerTrack', currentIndex);
-      sessionStorage.setItem('playerPlaylist', JSON.stringify(playlist));
-      sessionStorage.setItem('playerShuffle', shuffleEnabled);
-    }
-  }
-
-  // Load player state from sessionStorage
-  function loadPlayerState() {
-    if (sessionStorage) {
-      const track = sessionStorage.getItem('playerTrack');
-      const playlistData = sessionStorage.getItem('playerPlaylist');
-      const shuffle = sessionStorage.getItem('playerShuffle');
-
-      if (track !== null) currentIndex = parseInt(track);
-      if (playlistData) playlist = JSON.parse(playlistData);
-      if (shuffle !== null) shuffleEnabled = shuffle === 'true';
+  // Ensure audio element persists
+  function ensureAudioElement() {
+    if (!audio) {
+      audio = document.createElement('audio');
+      audio.id = 'audio-player';
+      audio.style.display = 'none';
+      document.body.appendChild(audio);
     }
   }
 
@@ -122,6 +111,7 @@ const Player = (() => {
   }
 
   function init() {
+    ensureAudioElement();
     audio = document.getElementById("audio-player");
     const playPauseBtn = document.getElementById("play-pause-btn");
     const prevBtn = document.getElementById("prev-btn");
@@ -143,8 +133,6 @@ const Player = (() => {
       shuffleBtn.addEventListener("click", toggleShuffle);
     }
 
-    // Expanding/collapsing lyrics is purely a CSS/DOM toggle — it never
-    // touches `audio`, so play/pause/seek/volume continue uninterrupted.
     if (lyricsBtn) {
       lyricsBtn.addEventListener("click", () => {
         if (lyricsBtn.disabled) return;
@@ -182,10 +170,10 @@ const Player = (() => {
     });
 
     audio.addEventListener("play", () => {
-      playPauseBtn.innerHTML = "&#10074;&#10074;"; // pause icon
+      playPauseBtn.innerHTML = "&#10074;&#10074;";
     });
     audio.addEventListener("pause", () => {
-      playPauseBtn.innerHTML = "&#9654;"; // play icon
+      playPauseBtn.innerHTML = "&#9654;";
     });
 
     seekBar.addEventListener("input", () => {
@@ -226,8 +214,6 @@ const Player = (() => {
   function loadLyricsFor(song) {
     if (!lyricsBtn || !lyricsPanelBody) return;
 
-    // Switching tracks always closes any open panel and disables the
-    // button until we've confirmed whether lyrics exist for the new song.
     const requestId = ++lyricsRequestId;
     lyricsPanel.classList.remove("open");
     lyricsBtn.disabled = true;
@@ -241,7 +227,7 @@ const Player = (() => {
         return res.text();
       })
       .then((text) => {
-        if (requestId !== lyricsRequestId) return; // a newer track started loading; discard
+        if (requestId !== lyricsRequestId) return;
         renderLyrics(text);
         lyricsBtn.disabled = false;
       })
@@ -252,15 +238,10 @@ const Player = (() => {
       });
   }
 
-  // Lyrics files come from various sources and may use \n, \r\n, or lone
-  // \r line endings. We normalize all of those to \n first, then build one
-  // element per line so each line break in the source is honored exactly —
-  // relying on CSS white-space alone breaks on lone-\r files and collapses
-  // blank lines, which is what produced the run-together lyrics text.
   function renderLyrics(rawText) {
     lyricsPanelBody.textContent = "";
     const normalized = rawText
-      .replace(/^\uFEFF/, "") // strip BOM some lyric files are saved with
+      .replace(/^\uFEFF/, "")
       .replace(/\r\n/g, "\n")
       .replace(/\r/g, "\n");
     const lines = normalized.split("\n");
