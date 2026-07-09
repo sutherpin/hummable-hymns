@@ -293,11 +293,16 @@ function performSearch(query, data) {
         const songCategory = song.category || "all";
         // Find the song in the target category's song list
         const targetSongs = songCategory === "all" ? data.songs : data.songs.filter(s => s.category === songCategory);
-        const songIndex = targetSongs.findIndex(s => s.title === song.title && s.filename === song.filename);
-        window.location.href = `playlist.html?category=${encodeURIComponent(songCategory)}&play=${songIndex}`;
+        const songIndexInTarget = targetSongs.findIndex(s => s.title === song.title && s.filename === song.filename);
+        window.location.href = `playlist.html?category=${encodeURIComponent(songCategory)}&play=${songIndexInTarget}`;
       } else {
         // On playlist page, play the song directly
         if (songIndex !== -1) {
+          // Ensure Player is initialized before loading track
+          if (!Player.loadTrack) {
+            console.error("Player not ready, initializing now...");
+            Player.init();
+          }
           Player.loadTrack(songIndex);
           highlightActiveSong(songIndex);
 
