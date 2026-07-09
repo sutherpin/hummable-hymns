@@ -19,6 +19,10 @@
     {
       "id": "inspirational",
       "name": "Inspirational Collection"
+    },
+    {
+      "id": "fun-and-random",
+      "name": "Fun and Random"
     }
   ],
   "songs": [
@@ -208,9 +212,15 @@
       "filename": "love runs deeply t16 r9_final.mp3",
       "category": "inspirational",
       "dateAdded": "July 7, 2026"
+    },
+    {
+      "title": "Rooted in Love",
+      "filename": "rooted in love.mp3",
+      "category": "fun-and-random",
+      "dateAdded": "July 9, 2026"
     }
   ],
   "siteTitle": "Hummable Hymns",
   "tagline": "Original songs composed with AI tools to uplift, encourage and nourish the Bride of Christ",
-  "lastUpdated": "July 7, 2026"
+  "lastUpdated": "July 9, 2026"
 }
