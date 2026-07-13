@@ -15,7 +15,47 @@
   --gradient-header: linear-gradient(135deg, #1a1040 0%, #0d1525 60%, #0a0c18 100%);
 }
 
+:root[data-theme="day"] {
+  --bg: #f7f5ef;
+  --surface: #ffffff;
+  --surface-light: #e6e1d4;
+  --surface-hover: #ece7da;
+  --text: #1a1810;
+  --text-dim: #5a5548;
+  --accent: #b5750f;
+  --accent-glow: rgba(181, 117, 15, 0.18);
+  --accent2: #6a4bb0;
+  --accent2-glow: rgba(106, 75, 176, 0.18);
+  --green: #1f8a52;
+  --gradient-header: linear-gradient(135deg, #fff8e8 0%, #fdf1e0 60%, #f7f5ef 100%);
+}
+:root[data-theme="day"] .site-header h1 {
+  background: linear-gradient(135deg, #a5680d 0%, #8a5610 50%, #6e4308 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+:root[data-theme="day"] .tagline { color: #4a4638; }
+:root[data-theme="day"] .category-card,
+:root[data-theme="day"] .song-item:hover,
+:root[data-theme="day"] .lyrics-panel,
+:root[data-theme="day"] .admin-section {
+  border-color: rgba(0,0,0,0.1);
+}
+:root[data-theme="day"] .category-card.all-card {
+  background: linear-gradient(135deg, #ece6fb 0%, var(--surface) 100%);
+}
+:root[data-theme="day"] .category-card.new-card {
+  background: linear-gradient(135deg, #e3f5ec 0%, var(--surface) 100%);
+}
+:root[data-theme="day"] .player-bar {
+  background: linear-gradient(180deg, rgba(255,255,255,0.97) 0%, rgba(247,245,239,0.99) 100%);
+  border-top-color: rgba(181,117,15,0.25);
+  box-shadow: 0 -4px 32px rgba(0,0,0,0.12);
+}
+
 * { box-sizing: border-box; }
+
+.hidden { display: none !important; }
 
 body {
   margin: 0;
@@ -36,6 +76,34 @@ a { color: var(--accent); text-decoration: none; }
   border-bottom: 1px solid rgba(232,160,48,0.15);
   position: relative;
   overflow: visible;
+}
+
+/* Theme toggle */
+.theme-toggle {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 50%;
+  color: var(--accent);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 5;
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+}
+.theme-toggle:hover {
+  background: var(--surface-hover);
+  transform: translateY(-1px);
+}
+:root[data-theme="day"] .theme-toggle {
+  border-color: rgba(0,0,0,0.12);
 }
 
 /* Search container */

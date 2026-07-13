@@ -1,6 +1,7 @@
 /* player.js
    Lightweight wrapper around the native <audio> element.
-   Exposes a global `Player` object used by app.js on playlist.html.
+   Exposes a global `Player` object used by app.js in the playlist view
+   of the single-page app (index.html).
 */
 
 const R2_BASE_URL = "https://pub-d1176e54922d4c95964ec94fbb1442fa.r2.dev";
@@ -35,6 +36,13 @@ const Player = (() => {
   let audio;
   let playlist = [];
   let currentIndex = -1;
+  // The actual song that's loaded/playing, tracked independently of
+  // `playlist`/`currentIndex`. Those two describe position within
+  // whichever category is currently being *displayed*, which can be
+  // swapped out (via setPlaylist) without the playing track changing.
+  // Without a separate reference, getCurrentSong() would misreport
+  // whatever song happens to share the old numeric index in the new list.
+  let currentSong = null;
   let onTrackChange = () => {};
   let lyricsBtn, lyricsPanel, lyricsPanelBody;
   let shuffleBtn;
@@ -45,9 +53,12 @@ const Player = (() => {
   let retryCount = 0;
   const MAX_RETRIES = 3;
   let audioContext;
+  let initialized = false;
 
   // Ensure audio element persists
   function ensureAudioElement() {
+    if (audio) return;
+    audio = document.getElementById('audio-player');
     if (!audio) {
       audio = document.createElement('audio');
       audio.id = 'audio-player';
@@ -111,6 +122,9 @@ const Player = (() => {
   }
 
   function init() {
+    if (initialized) return;
+    initialized = true;
+
     ensureAudioElement();
     audio = document.getElementById("audio-player");
     const playPauseBtn = document.getElementById("play-pause-btn");
@@ -191,12 +205,24 @@ const Player = (() => {
     if (shuffleEnabled) {
       buildShuffleOrder(startIndex >= 0 ? startIndex : null);
     }
-    loadTrack(startIndex);
+    if (startIndex >= 0) {
+      loadTrack(startIndex);
+      return;
+    }
+    // Not loading a new track here — just re-syncing currentIndex so it
+    // points at the playing song's position within *this* playlist, if
+    // it has one. currentSong itself (used by getCurrentSong) is left
+    // untouched, so playback and "what's playing" stay accurate even
+    // when the song isn't part of the category being displayed.
+    currentIndex = currentSong
+      ? playlist.findIndex((s) => s.filename === currentSong.filename)
+      : -1;
   }
 
   function loadTrack(index) {
     if (index < 0 || index >= playlist.length) return;
     currentIndex = index;
+    currentSong = playlist[currentIndex];
     if (shuffleEnabled) {
       const pos = shuffleOrder.indexOf(index);
       if (pos !== -1) shufflePosition = pos;
@@ -264,7 +290,10 @@ const Player = (() => {
   }
 
   function togglePlay() {
-    if (currentIndex === -1 && playlist.length > 0) {
+    // Only currentSong (not currentIndex) tells us whether something has
+    // ever been loaded — currentIndex can be -1 just because the song
+    // playing isn't part of whichever category is currently displayed.
+    if (!currentSong && playlist.length > 0) {
       if (shuffleEnabled) {
         if (shuffleOrder.length !== playlist.length) {
           buildShuffleOrder(null);
@@ -318,8 +347,22 @@ const Player = (() => {
       return;
     }
 
-    const prev = (currentIndex - 1 + playlist.length) % playlist.length;
+    // currentIndex can be -1 when the playing song isn't part of this
+    // playlist; treat that like "before the start" so prev wraps to the
+    // last track, symmetric with playNext() landing on the first.
+    const prev = currentIndex <= 0 ? playlist.length - 1 : currentIndex - 1;
     loadTrack(prev);
+  }
+
+  // The currently playing/loaded song, independent of whichever playlist
+  // view happens to be rendered right now. Used so navigating between
+  // categories doesn't disturb playback or misreport what's playing.
+  function getCurrentSong() {
+    return currentSong;
+  }
+
+  function isPlaying() {
+    return !!audio && !audio.paused;
   }
 
   return {
@@ -331,5 +374,7 @@ const Player = (() => {
     playPrev,
     toggleShuffle,
     isShuffleEnabled: () => shuffleEnabled,
+    getCurrentSong,
+    isPlaying,
   };
 })();

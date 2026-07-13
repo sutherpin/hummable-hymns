@@ -7,12 +7,20 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>Hummable Hymns</title>
-<link rel="stylesheet" href="css/style.css?v=7">
+<link rel="stylesheet" href="css/style.css?v=9">
+<script>
+  (function () {
+    var saved = localStorage.getItem("theme");
+    if (saved === "day") document.documentElement.setAttribute("data-theme", "day");
+  })();
+</script>
 </head>
 <body>
-  <header class="site-header">
-    <h1>Hummable Hymns</h1>
-    <p class="tagline">Original songs, freely played.</p>
+  <header class="site-header" id="site-header">
+    <button id="theme-toggle" class="theme-toggle" aria-label="Switch to day mode" title="Toggle day/night mode">&#9788;</button>
+    <a href="index.html" class="back-link hidden" id="back-link">&larr; Categories</a>
+    <h1 id="page-title">Hummable Hymns</h1>
+    <p class="tagline" id="page-tagline">Original songs, freely played.</p>
     <div class="search-container">
       <input type="text" id="search-input" placeholder="Search songs..." autocomplete="off">
       <div id="search-results" class="search-results-dropdown"></div>
@@ -23,11 +31,51 @@
     <!-- Categories are rendered here by js/app.js -->
   </main>
 
-  <footer class="site-footer">
+  <main id="playlist-view" class="hidden">
+    <ul class="song-list" id="song-list">
+      <!-- Songs rendered here by js/app.js -->
+    </ul>
+  </main>
+
+  <div class="player-bar hidden" id="player-bar">
+    <div class="lyrics-panel" id="lyrics-panel">
+      <div class="lyrics-panel-header">
+        <span>Lyrics</span>
+      </div>
+      <div class="lyrics-panel-body" id="lyrics-panel-body">
+        <!-- Lyrics text injected here by player.js -->
+      </div>
+    </div>
+    <div class="player-info">
+      <p id="now-playing-title">Select a song</p>
+    </div>
+    <div class="player-progress">
+      <span id="current-time">0:00</span>
+      <input type="range" id="seek-bar" value="0" min="0" max="100" step="0.1">
+      <span id="duration-time">0:00</span>
+    </div>
+    <div class="player-controls">
+      <button id="shuffle-btn" aria-label="Shuffle off" aria-pressed="false" title="Shuffle" fill="currentColor">
+        <svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+            <path d="M13 1H12V3H10.5858L7 6.58579L3.41421 3H0V5H2.58579L5.58579 8L2.58579 11H0V13H3.41421L11.4142 5H12V7H13L16 4L13 1Z"/>
+            <path d="M12 9H13L16 12L13 15H12V13H10.5858L8.41421 10.8284L9.82843 9.41421L11.4142 11H12V9Z"/>
+        </svg>
+      </button>
+      <button id="prev-btn" aria-label="Previous">&#9664;&#9664;</button>
+      <button id="play-pause-btn" aria-label="Play">&#9654;</button>
+      <button id="next-btn" aria-label="Next">&#9654;&#9654;</button>
+      <button id="lyrics-btn" aria-label="Show lyrics" class="lyrics-btn" disabled>&#9660; Lyrics</button>
+      <input type="range" id="volume-bar" min="0" max="1" step="0.01" value="1" aria-label="Volume">
+    </div>
+    <audio id="audio-player" preload="none"></audio>
+  </div>
+
+  <footer class="site-footer" id="site-footer">
     <p id="last-updated" style="margin:0; margin-bottom: 14pt;"></p>
     <p style="margin:0; font-size: 14pt;">Bugs, feature suggestions or general feedback? <a href="mailto:sutherfone@gmail.com">Let me know</a></p>
   </footer>
 
-  <script src="js/app.js?v=8"></script>
+  <script src="js/player.js?v=6"></script>
+  <script src="js/app.js?v=9"></script>
 </body>
 </html>
