@@ -68,8 +68,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (document.getElementById("audio-player")) {
         Player.init();
+        Player.onChange(updateNowPlayingStrip);
       }
 
+      setupNowPlayingStrip();
       setupSearch(data);
       setupNavInterception();
       window.addEventListener("popstate", route);
@@ -143,6 +145,10 @@ function showCategoryGridView() {
   const grid = document.getElementById("category-grid");
   grid.innerHTML = "";
   renderCategoryGrid(songsData);
+
+  if (typeof Player !== "undefined") {
+    updateNowPlayingStrip(Player.getCurrentSong(), Player.isPlaying());
+  }
 }
 
 function showPlaylistView(categoryId, songToPlay) {
@@ -154,7 +160,43 @@ function showPlaylistView(categoryId, songToPlay) {
   const footer = document.getElementById("site-footer");
   if (footer) footer.classList.add("hidden");
 
+  const strip = document.getElementById("now-playing-strip");
+  if (strip) strip.classList.add("hidden");
+
   renderPlaylist(songsData, categoryId, songToPlay);
+}
+
+// Shows what's currently loaded/playing on the category grid, where
+// there's otherwise no indication that navigating away didn't stop
+// playback. Only ever visible while the grid view is active.
+function updateNowPlayingStrip(song, playing) {
+  const strip = document.getElementById("now-playing-strip");
+  if (!strip) return;
+
+  if (!song || currentCategoryId !== null) {
+    strip.classList.add("hidden");
+    return;
+  }
+
+  document.getElementById("now-playing-strip-icon").innerHTML = playing
+    ? "&#10074;&#10074;"
+    : "&#9654;";
+  document.getElementById("now-playing-strip-text").textContent =
+    (playing ? "Now playing: " : "Paused: ") + song.title;
+  strip.classList.remove("hidden");
+}
+
+// Clicking the strip jumps to the playing song's category. It's already
+// loaded and playing, so this never touches Player — just navigation.
+function setupNowPlayingStrip() {
+  const strip = document.getElementById("now-playing-strip");
+  if (!strip) return;
+
+  strip.addEventListener("click", () => {
+    const song = Player.getCurrentSong();
+    if (!song) return;
+    navigateTo(`index.html?category=${encodeURIComponent(song.category || "all")}`);
+  });
 }
 
 function revealPlayerBar() {
@@ -181,6 +223,7 @@ function renderCategoryGrid(data) {
 
   data.categories.forEach((cat) => {
     const count = counts[cat.id] || 0;
+    if (count === 0) return;
     grid.appendChild(makeCategoryCard(cat.id, cat.name, count, false, false));
   });
 }
@@ -226,6 +269,7 @@ function renderPlaylist(data, categoryId, songToPlay) {
     li.innerHTML = `
       <span class="song-num">${index + 1}</span>
       <span class="song-title">${song.title}</span>
+      ${isRecent(song.dateAdded) ? '<span class="song-badge-new">New</span>' : ""}
       <span class="song-icon">&#9654;</span>
     `;
     li.addEventListener("click", () => {

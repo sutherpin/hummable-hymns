@@ -54,6 +54,14 @@ const Player = (() => {
   const MAX_RETRIES = 3;
   let audioContext;
   let initialized = false;
+  // Listeners for "what's playing" changes (track load, play, pause) that
+  // care regardless of which playlist view is currently rendered — e.g.
+  // the now-playing strip shown on the category grid.
+  let changeListeners = [];
+
+  function notifyChange() {
+    changeListeners.forEach((fn) => fn(currentSong, isPlaying()));
+  }
 
   // Ensure audio element persists
   function ensureAudioElement() {
@@ -185,9 +193,11 @@ const Player = (() => {
 
     audio.addEventListener("play", () => {
       playPauseBtn.innerHTML = "&#10074;&#10074;";
+      notifyChange();
     });
     audio.addEventListener("pause", () => {
       playPauseBtn.innerHTML = "&#9654;";
+      notifyChange();
     });
 
     seekBar.addEventListener("input", () => {
@@ -197,6 +207,8 @@ const Player = (() => {
     volumeBar.addEventListener("input", () => {
       audio.volume = volumeBar.value;
     });
+
+    setupKeyboardShortcuts();
   }
 
   function setPlaylist(songs, startIndex, trackChangeCallback) {
@@ -235,6 +247,7 @@ const Player = (() => {
     });
     onTrackChange(currentIndex, song);
     loadLyricsFor(song);
+    notifyChange();
   }
 
   function loadLyricsFor(song) {
@@ -365,6 +378,38 @@ const Player = (() => {
     return !!audio && !audio.paused;
   }
 
+  function seekBy(seconds) {
+    if (!audio || !currentSong) return;
+    const max = isFinite(audio.duration) ? audio.duration : Infinity;
+    audio.currentTime = Math.min(Math.max(audio.currentTime + seconds, 0), max);
+  }
+
+  // Space/arrow shortcuts, ignored while focus is on an interactive element
+  // (search box, seek/volume sliders, buttons, links) so native behavior —
+  // typing a space, nudging a focused slider — isn't hijacked.
+  function setupKeyboardShortcuts() {
+    const SEEK_SECONDS = 5;
+    const interactiveTags = ["INPUT", "TEXTAREA", "SELECT", "BUTTON", "A"];
+
+    document.addEventListener("keydown", (e) => {
+      const active = document.activeElement;
+      if (active && (interactiveTags.includes(active.tagName) || active.isContentEditable)) {
+        return;
+      }
+
+      if (e.code === "Space") {
+        e.preventDefault();
+        togglePlay();
+      } else if (e.code === "ArrowRight") {
+        e.preventDefault();
+        seekBy(SEEK_SECONDS);
+      } else if (e.code === "ArrowLeft") {
+        e.preventDefault();
+        seekBy(-SEEK_SECONDS);
+      }
+    });
+  }
+
   return {
     init,
     setPlaylist,
@@ -372,9 +417,11 @@ const Player = (() => {
     togglePlay,
     playNext,
     playPrev,
+    seekBy,
     toggleShuffle,
     isShuffleEnabled: () => shuffleEnabled,
     getCurrentSong,
     isPlaying,
+    onChange: (fn) => changeListeners.push(fn),
   };
 })();
