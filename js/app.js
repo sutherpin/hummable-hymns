@@ -147,7 +147,7 @@ function showCategoryGridView() {
   renderCategoryGrid(songsData);
 
   if (typeof Player !== "undefined") {
-    updateNowPlayingStrip(Player.getCurrentSong(), Player.isPlaying());
+    updateNowPlayingStrip(Player.getCurrentSong());
   }
 }
 
@@ -166,10 +166,11 @@ function showPlaylistView(categoryId, songToPlay) {
   renderPlaylist(songsData, categoryId, songToPlay);
 }
 
-// Shows what's currently loaded/playing on the category grid, where
-// there's otherwise no indication that navigating away didn't stop
-// playback. Only ever visible while the grid view is active.
-function updateNowPlayingStrip(song, playing) {
+// Shows a shortcut back to whatever's playing while browsing the category
+// grid — the player bar itself already shows title/play-state and is
+// visible everywhere, so this only needs to say where to find it, not
+// repeat what's already on screen.
+function updateNowPlayingStrip(song) {
   const strip = document.getElementById("now-playing-strip");
   if (!strip) return;
 
@@ -178,12 +179,15 @@ function updateNowPlayingStrip(song, playing) {
     return;
   }
 
-  document.getElementById("now-playing-strip-icon").innerHTML = playing
-    ? "&#10074;&#10074;"
-    : "&#9654;";
-  document.getElementById("now-playing-strip-text").textContent =
-    (playing ? "Now playing: " : "Paused: ") + song.title;
+  const categoryName = getCategoryName(song.category, songsData);
+  document.getElementById("now-playing-strip-text").textContent = `Playing from ${categoryName}`;
   strip.classList.remove("hidden");
+}
+
+function getCategoryName(categoryId, data) {
+  if (categoryId === "all" || !categoryId) return "All Songs";
+  if (categoryId === "new-additions") return "New Additions";
+  return (data.categories.find((c) => c.id === categoryId) || {}).name || "Playlist";
 }
 
 // Clicking the strip jumps to the playing song's category. It's already
@@ -240,17 +244,14 @@ function makeCategoryCard(id, name, count, isAll, isNew) {
 }
 
 function renderPlaylist(data, categoryId, songToPlay) {
-  let categoryName;
+  const categoryName = getCategoryName(categoryId, data);
   let songs;
 
   if (categoryId === "all") {
-    categoryName = "All Songs";
     songs = data.songs;
   } else if (categoryId === "new-additions") {
-    categoryName = "New Additions";
     songs = data.songs.filter((s) => isRecent(s.dateAdded));
   } else {
-    categoryName = (data.categories.find((c) => c.id === categoryId) || {}).name || "Playlist";
     songs = data.songs.filter((s) => s.category === categoryId);
   }
 

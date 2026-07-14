@@ -54,6 +54,18 @@ const Player = (() => {
   const MAX_RETRIES = 3;
   let audioContext;
   let initialized = false;
+  let preloadAudio;
+  let retryTimer = null;
+  let stallTimer = null;
+  const RETRY_DELAY_MS = 1000;
+  const STALL_TIMEOUT_MS = 12000;
+  // Below this effective connection speed, fetching the next track's full
+  // audio concurrently with the current one competes for the same limited
+  // bandwidth and risks stalling the track that's actually playing — so on
+  // slow connections, delay the preload until the current track is almost
+  // done instead of starting it immediately.
+  const SLOW_CONNECTION_TYPES = ["slow-2g", "2g"];
+  let preloadedForCurrentTrack = false;
   // Listeners for "what's playing" changes (track load, play, pause) that
   // care regardless of which playlist view is currently rendered — e.g.
   // the now-playing strip shown on the category grid.
@@ -135,11 +147,15 @@ const Player = (() => {
 
     ensureAudioElement();
     audio = document.getElementById("audio-player");
+    preloadAudio = new Audio();
+    preloadAudio.preload = "auto";
     const playPauseBtn = document.getElementById("play-pause-btn");
     const prevBtn = document.getElementById("prev-btn");
     const nextBtn = document.getElementById("next-btn");
     const seekBar = document.getElementById("seek-bar");
     const volumeBar = document.getElementById("volume-bar");
+    const volumeBtn = document.getElementById("volume-btn");
+    const volumePopover = document.getElementById("volume-popover");
     const currentTimeEl = document.getElementById("current-time");
     const durationTimeEl = document.getElementById("duration-time");
 
@@ -172,16 +188,43 @@ const Player = (() => {
     audio.addEventListener("timeupdate", () => {
       seekBar.value = audio.currentTime;
       currentTimeEl.textContent = formatTime(audio.currentTime);
+      maybePreloadNext();
     });
 
     audio.addEventListener("ended", playNext);
 
+    // A slow/flaky connection more often shows up as a silent stall than
+    // a hard error — the browser fires `waiting` and just never resumes.
+    // If that drags on, force a reload rather than leaving playback hung
+    // with no feedback and no recovery.
+    audio.addEventListener("waiting", () => {
+      clearTimeout(stallTimer);
+      stallTimer = setTimeout(() => {
+        const resumeAt = audio.currentTime;
+        console.warn("Playback stalled; reloading and resuming position.");
+        audio.load();
+        audio.currentTime = resumeAt;
+        audio.play().catch(() => {});
+      }, STALL_TIMEOUT_MS);
+    });
+    audio.addEventListener("playing", () => clearTimeout(stallTimer));
+    audio.addEventListener("pause", () => clearTimeout(stallTimer));
+
     audio.addEventListener("error", () => {
+      clearTimeout(stallTimer);
       if (retryCount < MAX_RETRIES) {
         retryCount++;
-        console.warn(`Retrying audio load (${retryCount}/${MAX_RETRIES})...`);
-        audio.load();
-        audio.play().catch(() => {});
+        // Back off instead of retrying instantly — a transient network
+        // hiccup right at track-end otherwise burns through all retries
+        // in the same tick and gives up before the network recovers,
+        // leaving playback stuck until the user manually taps play.
+        const delay = RETRY_DELAY_MS * retryCount;
+        console.warn(`Retrying audio load in ${delay}ms (${retryCount}/${MAX_RETRIES})...`);
+        clearTimeout(retryTimer);
+        retryTimer = setTimeout(() => {
+          audio.load();
+          audio.play().catch(() => {});
+        }, delay);
         return;
       }
 
@@ -208,7 +251,42 @@ const Player = (() => {
       audio.volume = volumeBar.value;
     });
 
+    // Only relevant on narrow viewports, where CSS swaps the inline
+    // volume slider for this icon + popover (see .volume-btn in
+    // style.css) to stop it from pushing controls into a wrapped second
+    // row that could land partly below the screen.
+    if (volumeBtn && volumePopover) {
+      volumeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const isOpen = volumePopover.classList.toggle("open");
+        volumeBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+      });
+      document.addEventListener("click", (e) => {
+        if (!volumePopover.classList.contains("open")) return;
+        if (e.target === volumeBtn || volumePopover.contains(e.target)) return;
+        volumePopover.classList.remove("open");
+        volumeBtn.setAttribute("aria-expanded", "false");
+      });
+    }
+
+    setupPlayerBarHeightSync();
     setupKeyboardShortcuts();
+  }
+
+  // The fixed player bar can grow taller on narrow viewports (controls
+  // wrapping to a second row), and the page's bottom padding needs to
+  // clear whatever that height actually is or the last item(s) in a long
+  // song list render underneath it. Track the real height instead of
+  // assuming a fixed value.
+  function setupPlayerBarHeightSync() {
+    const bar = document.getElementById("player-bar");
+    if (!bar || typeof ResizeObserver === "undefined") return;
+
+    const sync = () => {
+      document.documentElement.style.setProperty("--player-bar-height", `${bar.offsetHeight}px`);
+    };
+    new ResizeObserver(sync).observe(bar);
+    sync();
   }
 
   function setPlaylist(songs, startIndex, trackChangeCallback) {
@@ -233,6 +311,11 @@ const Player = (() => {
 
   function loadTrack(index) {
     if (index < 0 || index >= playlist.length) return;
+    // Cancel any pending error-retry or stall-recovery from the track
+    // being navigated away from — otherwise it can fire later and reload
+    // whatever happens to be playing by then, causing an unrelated blip.
+    clearTimeout(retryTimer);
+    clearTimeout(stallTimer);
     currentIndex = index;
     currentSong = playlist[currentIndex];
     if (shuffleEnabled) {
@@ -240,6 +323,7 @@ const Player = (() => {
       if (pos !== -1) shufflePosition = pos;
     }
     retryCount = 0;
+    preloadedForCurrentTrack = false;
     const song = playlist[currentIndex];
     audio.src = buildSongUrl(song.filename);
     audio.play().catch(() => {
@@ -248,6 +332,62 @@ const Player = (() => {
     onTrackChange(currentIndex, song);
     loadLyricsFor(song);
     notifyChange();
+    maybePreloadNext();
+  }
+
+  // Peek at the song playNext() would load, without mutating any
+  // shuffle/index state. Only handles the common, deterministic case
+  // (no shuffle-cycle rebuild) — good enough for warming the network
+  // connection ahead of time; the rare wraparound case just misses out.
+  function peekNextIndex() {
+    if (playlist.length === 0) return -1;
+    if (shuffleEnabled) {
+      if (shuffleOrder.length !== playlist.length) return -1;
+      if (shufflePosition + 1 >= shuffleOrder.length) return -1;
+      return shuffleOrder[shufflePosition + 1];
+    }
+    return (currentIndex + 1) % playlist.length;
+  }
+
+  function isSlowConnection() {
+    const conn = navigator.connection;
+    if (!conn) return false;
+    return conn.saveData || SLOW_CONNECTION_TYPES.includes(conn.effectiveType);
+  }
+
+  // On a normal connection, warm the next track's data as soon as the
+  // current one starts — free head start, since bandwidth isn't scarce.
+  // On a slow/data-saver connection, that same prefetch would compete
+  // with the current track's own buffering and risks starving it, so
+  // hold off until the current track is almost finished instead.
+  const LATE_PRELOAD_REMAINING_SECONDS = 15;
+
+  function maybePreloadNext() {
+    if (preloadedForCurrentTrack) return;
+    if (isSlowConnection()) {
+      const remaining = audio.duration - audio.currentTime;
+      if (!isFinite(remaining) || remaining > LATE_PRELOAD_REMAINING_SECONDS) {
+        return;
+      }
+    }
+    preloadedForCurrentTrack = true;
+    preloadNext();
+  }
+
+  // Start fetching the next track's audio into the browser cache while
+  // the current one is still playing, so that when `ended` fires and
+  // playNext() swaps the <audio> src, the data is already warm instead
+  // of starting a cold connection right at the moment playback needs it.
+  function preloadNext() {
+    if (!preloadAudio) return;
+    const nextIndex = peekNextIndex();
+    if (nextIndex < 0) return;
+    const nextSong = playlist[nextIndex];
+    if (!nextSong) return;
+    const url = buildSongUrl(nextSong.filename);
+    if (preloadAudio.src === url) return;
+    preloadAudio.src = url;
+    preloadAudio.load();
   }
 
   function loadLyricsFor(song) {

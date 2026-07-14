@@ -63,7 +63,11 @@ body {
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
-  padding-bottom: 120px;
+  /* Kept in sync with the fixed player bar's real rendered height by
+     player.js — the bar can grow taller on narrow viewports where its
+     controls wrap to a second row, and a hardcoded value here would
+     leave the last song(s) in a long list hidden underneath it. */
+  padding-bottom: calc(var(--player-bar-height, 120px) + 12px);
 }
 
 a { color: var(--accent); text-decoration: none; }
@@ -553,7 +557,59 @@ a { color: var(--accent); text-decoration: none; }
   padding: 0;
 }
 #play-pause-btn:hover { background: rgba(232,160,48,0.22); color: var(--accent); }
+
+/* Prev/Next get explicit sizing so they meet the ~44px touch-target
+   minimum instead of shrinking to their glyph's natural size. */
+#prev-btn, #next-btn {
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
 #volume-bar { width: 80px; margin-left: 6px; }
+
+/* Volume control: inline slider on wide layouts, icon + popover on
+   narrow ones — the range input's default sizing was one of the players
+   in the two-row wrap that pushed controls (or the whole bar) off the
+   bottom of small phone viewports. */
+.volume-control { position: relative; display: flex; align-items: center; }
+.volume-btn { display: none; }
+.volume-popover { display: contents; }
+
+@media (max-width: 479px) {
+  .volume-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
+  }
+  .volume-popover {
+    display: block;
+    position: absolute;
+    bottom: calc(100% + 10px);
+    right: 0;
+    background: var(--surface);
+    border: 1px solid var(--surface-light);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(4px);
+    transition: opacity 0.15s, transform 0.15s;
+  }
+  .volume-popover.open {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+  #volume-bar { width: 120px; margin-left: 0; }
+}
 
 #shuffle-btn {
   display: flex;

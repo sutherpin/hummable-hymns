@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>Hummable Hymns</title>
-<link rel="stylesheet" href="css/style.css?v=10">
+<link rel="stylesheet" href="css/style.css?v=11">
 <script>
   (function () {
     var saved = localStorage.getItem("theme");
@@ -28,7 +28,7 @@
   </header>
 
   <button id="now-playing-strip" class="now-playing-strip hidden" type="button">
-    <span class="now-playing-strip-icon" id="now-playing-strip-icon">&#9654;</span>
+    <span class="now-playing-strip-icon">&#8618;</span>
     <span class="now-playing-strip-text" id="now-playing-strip-text"></span>
   </button>
 
@@ -70,9 +70,14 @@
       <button id="play-pause-btn" aria-label="Play">&#9654;</button>
       <button id="next-btn" aria-label="Next">&#9654;&#9654;</button>
       <button id="lyrics-btn" aria-label="Show lyrics" class="lyrics-btn" disabled>&#9660; Lyrics</button>
-      <input type="range" id="volume-bar" min="0" max="1" step="0.01" value="1" aria-label="Volume">
+      <div class="volume-control">
+        <button id="volume-btn" class="volume-btn" aria-label="Volume" aria-expanded="false" aria-controls="volume-popover">&#128266;</button>
+        <div class="volume-popover" id="volume-popover">
+          <input type="range" id="volume-bar" min="0" max="1" step="0.01" value="1" aria-label="Volume">
+        </div>
+      </div>
     </div>
-    <audio id="audio-player" preload="none"></audio>
+    <audio id="audio-player" preload="auto"></audio>
   </div>
 
   <footer class="site-footer" id="site-footer">
@@ -80,7 +85,7 @@
     <p style="margin:0; font-size: 14pt;">Bugs, feature suggestions or general feedback? <a href="mailto:sutherfone@gmail.com">Let me know</a></p>
   </footer>
 
-  <script src="js/player.js?v=8"></script>
-  <script src="js/app.js?v=10"></script>
+  <script src="js/player.js?v=11"></script>
+  <script src="js/app.js?v=11"></script>
 </body>
 </html>
