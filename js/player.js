@@ -51,7 +51,8 @@ const Player = (() => {
   let shufflePosition = 0;
   let lyricsRequestId = 0;
   let retryCount = 0;
-  const MAX_RETRIES = 3;
+  const MAX_RETRIES = 5;
+  let consecutiveLoadFailures = 0;
   let audioContext;
   let initialized = false;
   let preloadAudio;
@@ -59,12 +60,6 @@ const Player = (() => {
   let stallTimer = null;
   const RETRY_DELAY_MS = 1000;
   const STALL_TIMEOUT_MS = 12000;
-  // Below this effective connection speed, fetching the next track's full
-  // audio concurrently with the current one competes for the same limited
-  // bandwidth and risks stalling the track that's actually playing — so on
-  // slow connections, delay the preload until the current track is almost
-  // done instead of starting it immediately.
-  const SLOW_CONNECTION_TYPES = ["slow-2g", "2g"];
   let preloadedForCurrentTrack = false;
   // Listeners for "what's playing" changes (track load, play, pause) that
   // care regardless of which playlist view is currently rendered — e.g.
@@ -167,6 +162,7 @@ const Player = (() => {
     playPauseBtn.addEventListener("click", togglePlay);
     prevBtn.addEventListener("click", playPrev);
     nextBtn.addEventListener("click", playNext);
+    setupMediaSession();
     if (shuffleBtn) {
       shuffleBtn.addEventListener("click", toggleShuffle);
     }
@@ -183,12 +179,14 @@ const Player = (() => {
     audio.addEventListener("loadedmetadata", () => {
       seekBar.max = audio.duration || 0;
       durationTimeEl.textContent = formatTime(audio.duration);
+      updatePositionState();
     });
 
     audio.addEventListener("timeupdate", () => {
       seekBar.value = audio.currentTime;
       currentTimeEl.textContent = formatTime(audio.currentTime);
       maybePreloadNext();
+      updatePositionState();
     });
 
     audio.addEventListener("ended", playNext);
@@ -198,6 +196,9 @@ const Player = (() => {
     // If that drags on, force a reload rather than leaving playback hung
     // with no feedback and no recovery.
     audio.addEventListener("waiting", () => {
+      // Stop competing with the stalled track for bandwidth immediately —
+      // don't wait for the stall timeout to decide the preload was a bad idea.
+      abortPreload();
       clearTimeout(stallTimer);
       stallTimer = setTimeout(() => {
         const resumeAt = audio.currentTime;
@@ -207,7 +208,10 @@ const Player = (() => {
         audio.play().catch(() => {});
       }, STALL_TIMEOUT_MS);
     });
-    audio.addEventListener("playing", () => clearTimeout(stallTimer));
+    audio.addEventListener("playing", () => {
+      clearTimeout(stallTimer);
+      consecutiveLoadFailures = 0;
+    });
     audio.addEventListener("pause", () => clearTimeout(stallTimer));
 
     audio.addEventListener("error", () => {
@@ -230,16 +234,32 @@ const Player = (() => {
 
       const song = playlist[currentIndex];
       const title = song ? song.title : "Unknown";
-      document.getElementById("now-playing-title").textContent = `⚠️ Error loading "${title}" — file may be missing or URL is broken.`;
+      document.getElementById("now-playing-title").textContent = `⚠️ Could not load "${title}" — skipping to the next song.`;
       document.getElementById("play-pause-btn").innerHTML = "&#9654;";
+
+      // A track that still errors after retries is usually a genuinely
+      // missing/broken file, not a transient blip — retrying forever won't
+      // fix that, and leaving playback dead until the user manually taps
+      // play/skip is exactly the "silent stop" behavior we want to avoid.
+      // Auto-advance instead, capped so a run of broken files can't loop
+      // through the whole playlist forever.
+      consecutiveLoadFailures++;
+      if (consecutiveLoadFailures < playlist.length) {
+        clearTimeout(retryTimer);
+        retryTimer = setTimeout(playNext, RETRY_DELAY_MS);
+      } else {
+        console.warn("Too many consecutive track load failures; stopping auto-advance.");
+      }
     });
 
     audio.addEventListener("play", () => {
       playPauseBtn.innerHTML = "&#10074;&#10074;";
+      if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
       notifyChange();
     });
     audio.addEventListener("pause", () => {
       playPauseBtn.innerHTML = "&#9654;";
+      if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "paused";
       notifyChange();
     });
 
@@ -289,6 +309,63 @@ const Player = (() => {
     sync();
   }
 
+  // Routes hardware/OS-level transport controls to the player — the lock
+  // screen, notification media controls, and (critically) a Bluetooth
+  // headset/car stereo's play/pause/next/previous buttons all go through
+  // this API rather than through the page's own buttons. Without it, the
+  // OS has no way to deliver those commands to the page at all, which is
+  // why Bluetooth "next track" does nothing.
+  function setupMediaSession() {
+    if (!("mediaSession" in navigator)) return;
+
+    navigator.mediaSession.setActionHandler("play", () => audio.play());
+    navigator.mediaSession.setActionHandler("pause", () => audio.pause());
+    navigator.mediaSession.setActionHandler("previoustrack", playPrev);
+    navigator.mediaSession.setActionHandler("nexttrack", playNext);
+    navigator.mediaSession.setActionHandler("seekbackward", (details) => {
+      seekBy(-(details.seekOffset || 10));
+    });
+    navigator.mediaSession.setActionHandler("seekforward", (details) => {
+      seekBy(details.seekOffset || 10);
+    });
+    try {
+      navigator.mediaSession.setActionHandler("seekto", (details) => {
+        if (details.fastSeek && "fastSeek" in audio) {
+          audio.fastSeek(details.seekTime);
+          return;
+        }
+        audio.currentTime = details.seekTime;
+      });
+    } catch (e) {
+      // Some browsers don't support the "seekto" action; safe to ignore.
+    }
+  }
+
+  function updateMediaSessionMetadata(song) {
+    if (!("mediaSession" in navigator)) return;
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: song.title,
+      artist: "Hummable Hymns",
+      album: song.category || "",
+    });
+  }
+
+  function updatePositionState() {
+    if (!("mediaSession" in navigator) || !("setPositionState" in navigator.mediaSession)) return;
+    if (!isFinite(audio.duration) || audio.duration <= 0) return;
+    try {
+      navigator.mediaSession.setPositionState({
+        duration: audio.duration,
+        playbackRate: audio.playbackRate,
+        position: audio.currentTime,
+      });
+    } catch (e) {
+      // Guards against rare browser edge cases (e.g. currentTime briefly
+      // exceeding duration during a seek) throwing on an otherwise
+      // non-critical, purely cosmetic lock-screen update.
+    }
+  }
+
   function setPlaylist(songs, startIndex, trackChangeCallback) {
     playlist = songs;
     onTrackChange = trackChangeCallback || (() => {});
@@ -326,6 +403,7 @@ const Player = (() => {
     preloadedForCurrentTrack = false;
     const song = playlist[currentIndex];
     audio.src = buildSongUrl(song.filename);
+    updateMediaSessionMetadata(song);
     audio.play().catch(() => {
       /* Autoplay may be blocked until user interacts; that's fine. */
     });
@@ -349,29 +427,36 @@ const Player = (() => {
     return (currentIndex + 1) % playlist.length;
   }
 
-  function isSlowConnection() {
-    const conn = navigator.connection;
-    if (!conn) return false;
-    return conn.saveData || SLOW_CONNECTION_TYPES.includes(conn.effectiveType);
-  }
-
-  // On a normal connection, warm the next track's data as soon as the
-  // current one starts — free head start, since bandwidth isn't scarce.
-  // On a slow/data-saver connection, that same prefetch would compete
-  // with the current track's own buffering and risks starving it, so
-  // hold off until the current track is almost finished instead.
+  // Always wait until the current track is almost finished before warming
+  // the next track's audio, rather than starting the fetch immediately.
+  // Fetching two full tracks concurrently competes for the same mobile
+  // bandwidth, and `navigator.connection.effectiveType` isn't a reliable
+  // guard against this: it caps out at "4g" for 5G connections too, so a
+  // real-world 5G connection that's fluctuating (moving vehicle, tunnel,
+  // tower handoff) never gets flagged as "slow" even though the extra
+  // concurrent fetch can still starve the track that's actually playing
+  // and cause a hard stall. Deferring the preload for everyone avoids that
+  // risk for a negligible loss of head start.
   const LATE_PRELOAD_REMAINING_SECONDS = 15;
 
   function maybePreloadNext() {
     if (preloadedForCurrentTrack) return;
-    if (isSlowConnection()) {
-      const remaining = audio.duration - audio.currentTime;
-      if (!isFinite(remaining) || remaining > LATE_PRELOAD_REMAINING_SECONDS) {
-        return;
-      }
+    const remaining = audio.duration - audio.currentTime;
+    if (!isFinite(remaining) || remaining > LATE_PRELOAD_REMAINING_SECONDS) {
+      return;
     }
     preloadedForCurrentTrack = true;
     preloadNext();
+  }
+
+  // Free up bandwidth for the track that's actually playing to recover:
+  // if it stalls, the background preload of the *next* track is a much
+  // lower priority and should stop competing for the connection.
+  function abortPreload() {
+    if (!preloadAudio) return;
+    preloadAudio.removeAttribute("src");
+    preloadAudio.load();
+    preloadedForCurrentTrack = false;
   }
 
   // Start fetching the next track's audio into the browser cache while
