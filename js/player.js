@@ -216,8 +216,21 @@ const Player = (() => {
 
     audio.addEventListener("error", () => {
       clearTimeout(stallTimer);
+
+      // MediaError codes: 1 ABORTED, 2 NETWORK, 3 DECODE, 4 SRC_NOT_SUPPORTED.
+      // A mid-track error is most often either the connection dropping the
+      // response early (NETWORK) or a corrupted/truncated chunk the decoder
+      // chokes on (DECODE) — logging which helps tell those apart later,
+      // since this can't be reproduced on demand.
+      const mediaError = audio.error;
+      console.warn(
+        `Audio error (code ${mediaError ? mediaError.code : "?"}) at ${audio.currentTime.toFixed(1)}s`,
+        mediaError
+      );
+
       if (retryCount < MAX_RETRIES) {
         retryCount++;
+        const resumeAt = audio.currentTime;
         // Back off instead of retrying instantly — a transient network
         // hiccup right at track-end otherwise burns through all retries
         // in the same tick and gives up before the network recovers,
@@ -226,7 +239,24 @@ const Player = (() => {
         console.warn(`Retrying audio load in ${delay}ms (${retryCount}/${MAX_RETRIES})...`);
         clearTimeout(retryTimer);
         retryTimer = setTimeout(() => {
+          const song = playlist[currentIndex];
+          // Re-request with a cache-busting param instead of just calling
+          // load() on the same URL — if the error was caused by a bad
+          // cached/proxied response (a mobile carrier's transparent media
+          // proxy mangling a chunk, a corrupted disk-cache entry), reusing
+          // the identical URL can just hand back the same bad bytes and
+          // burn through every retry without ever actually recovering.
+          audio.src = song ? buildSongUrl(song.filename) + `?retry=${retryCount}` : audio.src;
           audio.load();
+          if (resumeAt > 0) {
+            audio.addEventListener(
+              "loadedmetadata",
+              () => {
+                audio.currentTime = resumeAt;
+              },
+              { once: true }
+            );
+          }
           audio.play().catch(() => {});
         }, delay);
         return;
@@ -234,7 +264,8 @@ const Player = (() => {
 
       const song = playlist[currentIndex];
       const title = song ? song.title : "Unknown";
-      document.getElementById("now-playing-title").textContent = `⚠️ Could not load "${title}" — skipping to the next song.`;
+      const codeLabel = mediaError ? ` (code ${mediaError.code})` : "";
+      document.getElementById("now-playing-title").textContent = `⚠️ Could not load "${title}"${codeLabel} — skipping to the next song.`;
       document.getElementById("play-pause-btn").innerHTML = "&#9654;";
 
       // A track that still errors after retries is usually a genuinely
