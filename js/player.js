@@ -455,18 +455,27 @@ const Player = (() => {
     }
   }
 
-  // Registering action handlers (needed for Bluetooth transport buttons,
-  // below) is itself enough to switch Chrome out of its automatic
-  // fallback title behavior and into "explicit session" mode — so once
-  // Bluetooth support exists at all, the title depends entirely on this
-  // metadata actually working. It wasn't (title + artist + album +
-  // artwork all at once produced "No Title" on a real device); this is
-  // trimmed to just the title as a next attempt, in case one of the other
-  // fields was the problem.
+  const MEDIA_SESSION_ARTWORK = [
+    { src: "img/icon-192.png", sizes: "192x192", type: "image/png" },
+    { src: "img/icon-512.png", sizes: "512x512", type: "image/png" },
+  ];
+
+  // Confirmed via `adb shell dumpsys media_session` on a real device that
+  // this is set correctly at the JS layer but never reaches Android's
+  // native media session (metadata size stays 0 no matter what fields are
+  // sent, even when set manually via a live DevTools connection bypassing
+  // this code entirely) — a Chrome-for-Android bug on that
+  // device/build, not something fixable from here. Left at the full,
+  // correct metadata rather than a stripped-down version, since trimming
+  // fields didn't change the outcome and this should work fine on
+  // devices without that bug.
   function updateMediaSessionMetadata(song) {
     if (!("mediaSession" in navigator)) return;
     navigator.mediaSession.metadata = new MediaMetadata({
       title: song.title,
+      artist: "punchycrossfader",
+      album: song.category || "",
+      artwork: MEDIA_SESSION_ARTWORK,
     });
   }
 

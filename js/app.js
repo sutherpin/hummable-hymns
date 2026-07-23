@@ -86,6 +86,7 @@ document.addEventListener("DOMContentLoaded", () => {
       setupNowPlayingStrip();
       setupSearch(data);
       setupNavInterception();
+      setupBugfixHistory();
       window.addEventListener("popstate", route);
       route();
     })
@@ -444,5 +445,101 @@ function performSearch(query, data) {
 function highlightActiveSong(index) {
   document.querySelectorAll(".song-item").forEach((el) => {
     el.classList.toggle("active", Number(el.dataset.index) === index);
+  });
+}
+
+// "Bugfix history" modal — pulls commit history live from the GitHub API
+// on demand (only when opened, not on every page load) so casual visitors
+// never pay for it.
+const GITHUB_REPO = "sutherpin/hummable-hymns";
+let bugfixHistoryLoaded = false;
+
+function setupBugfixHistory() {
+  const btn = document.getElementById("bugfix-history-btn");
+  const modal = document.getElementById("bugfix-modal");
+  const backdrop = document.getElementById("bugfix-modal-backdrop");
+  const closeBtn = document.getElementById("bugfix-modal-close");
+  if (!btn || !modal) return;
+
+  const open = () => {
+    modal.classList.remove("hidden");
+    if (!bugfixHistoryLoaded) loadBugfixHistory();
+  };
+  const close = () => modal.classList.add("hidden");
+
+  btn.addEventListener("click", open);
+  backdrop.addEventListener("click", close);
+  closeBtn.addEventListener("click", close);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !modal.classList.contains("hidden")) close();
+  });
+}
+
+function loadBugfixHistory() {
+  const body = document.getElementById("bugfix-modal-body");
+
+  fetch(`https://api.github.com/repos/${GITHUB_REPO}/commits?per_page=100`)
+    .then((res) => (res.ok ? res.json() : Promise.reject(new Error(res.status))))
+    .then((commits) => {
+      bugfixHistoryLoaded = true;
+      renderBugfixHistory(commits, body);
+    })
+    .catch(() => {
+      body.innerHTML = '<p class="bugfix-error">Couldn\'t load history from GitHub right now — try again in a bit.</p>';
+    });
+}
+
+function renderBugfixHistory(commits, body) {
+  // Merge commits are just "caught up with origin/main" noise, not
+  // actual changes — skip anything with more than one parent.
+  const real = commits.filter((c) => (c.parents || []).length <= 1);
+
+  if (real.length === 0) {
+    body.innerHTML = '<p class="bugfix-error">No history to show.</p>';
+    return;
+  }
+
+  const groups = [];
+  let currentKey = null;
+  let currentList = null;
+
+  real.forEach((c) => {
+    const date = new Date(c.commit.author.date);
+    const key = date.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+    if (key !== currentKey) {
+      currentKey = key;
+      currentList = [];
+      groups.push({ label: key, items: currentList });
+    }
+    const summary = (c.commit.message || "").split("\n")[0];
+    currentList.push({ summary, url: c.html_url, sha: c.sha.slice(0, 7) });
+  });
+
+  body.innerHTML = "";
+  groups.forEach((group) => {
+    const section = document.createElement("div");
+    section.className = "bugfix-date-group";
+
+    const heading = document.createElement("h3");
+    heading.className = "bugfix-date-heading";
+    heading.textContent = group.label;
+    section.appendChild(heading);
+
+    const list = document.createElement("ul");
+    list.className = "bugfix-list";
+    group.items.forEach((item) => {
+      const li = document.createElement("li");
+      li.textContent = item.summary;
+      const link = document.createElement("a");
+      link.href = item.url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = `#${item.sha}`;
+      li.appendChild(link);
+      list.appendChild(li);
+    });
+    section.appendChild(list);
+
+    body.appendChild(section);
   });
 }

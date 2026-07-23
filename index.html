@@ -9,7 +9,7 @@
 <title>Hummable Hymns</title>
 <link rel="icon" href="img/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="img/icon-192.png">
-<link rel="stylesheet" href="css/style.css?v=15">
+<link rel="stylesheet" href="css/style.css?v=16">
 <script>
   (function () {
     var saved = localStorage.getItem("theme");
@@ -85,10 +85,26 @@
   <footer class="site-footer" id="site-footer">
     <p id="last-updated" style="margin:0; margin-bottom: 14pt;"></p>
     <p style="margin:0; font-size: 14pt;">Bugs, feature suggestions or general feedback? <a href="mailto:sutherfone@gmail.com">Let me know</a></p>
+    <p class="browser-tip">🦊 Listening with your phone locked? Chrome-based browsers (Chrome, Brave, Samsung Internet, etc.) have a known Android limitation that can cut playback short after a few tracks. Firefox for Android doesn't have this issue.</p>
     <p id="deploy-stamp" class="deploy-stamp"></p>
+    <p class="bugfix-history-link"><button type="button" id="bugfix-history-btn">🐛 Bugfix history</button></p>
   </footer>
 
-  <script src="js/player.js?v=15"></script>
-  <script src="js/app.js?v=15"></script>
+  <div id="bugfix-modal" class="bugfix-modal hidden" role="dialog" aria-modal="true" aria-labelledby="bugfix-modal-title">
+    <div class="bugfix-modal-backdrop" id="bugfix-modal-backdrop"></div>
+    <div class="bugfix-modal-panel">
+      <div class="bugfix-modal-header">
+        <h2 id="bugfix-modal-title">Bugfix History</h2>
+        <button type="button" id="bugfix-modal-close" aria-label="Close">&times;</button>
+      </div>
+      <p class="bugfix-modal-subtitle">Live from the GitHub commit history.</p>
+      <div id="bugfix-modal-body" class="bugfix-modal-body">
+        <p class="bugfix-loading">Loading…</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/player.js?v=16"></script>
+  <script src="js/app.js?v=16"></script>
 </body>
 </html>
