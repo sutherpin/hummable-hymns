@@ -581,46 +581,34 @@ a { color: var(--accent); text-decoration: none; }
   padding: 0;
 }
 
-#volume-bar { width: 80px; margin-left: 6px; }
-
-/* Volume control: inline slider on wide layouts, icon + popover on
-   narrow ones — the range input's default sizing was one of the players
-   in the two-row wrap that pushed controls (or the whole bar) off the
-   bottom of small phone viewports. */
-.volume-control { position: relative; display: flex; align-items: center; }
-.volume-btn { display: none; }
-.volume-popover { display: contents; }
-
-@media (max-width: 479px) {
-  .volume-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 44px;
-    min-height: 44px;
-    padding: 0;
-  }
-  .volume-popover {
-    display: block;
-    position: absolute;
-    bottom: calc(100% + 10px);
-    right: 0;
-    background: var(--surface);
-    border: 1px solid var(--surface-light);
-    border-radius: var(--radius-sm);
-    padding: 10px 12px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
-    opacity: 0;
-    pointer-events: none;
-    transform: translateY(4px);
-    transition: opacity 0.15s, transform 0.15s;
-  }
-  .volume-popover.open {
-    opacity: 1;
-    pointer-events: auto;
-    transform: translateY(0);
-  }
-  #volume-bar { width: 120px; margin-left: 0; }
+/* Second row under the transport controls: a full-width volume slider on
+   the left, buffer percentage on the right. The player bar already has
+   the vertical room for this row on narrow viewports (previously spent
+   on a collapsed volume icon + tap-to-open popover) — no reason to hide
+   the slider behind a tap when there's space to just show it. */
+.player-secondary-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 2px;
+}
+.volume-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+.volume-icon {
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+#volume-bar { flex: 1; min-width: 0; }
+.buffer-status {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 #shuffle-btn {

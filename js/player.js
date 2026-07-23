@@ -159,8 +159,7 @@ const Player = (() => {
     const nextBtn = document.getElementById("next-btn");
     const seekBar = document.getElementById("seek-bar");
     const volumeBar = document.getElementById("volume-bar");
-    const volumeBtn = document.getElementById("volume-btn");
-    const volumePopover = document.getElementById("volume-popover");
+    const bufferStatusEl = document.getElementById("buffer-status");
     const currentTimeEl = document.getElementById("current-time");
     const durationTimeEl = document.getElementById("duration-time");
 
@@ -195,6 +194,7 @@ const Player = (() => {
     function updateSeekBarFill() {
       if (!isFinite(audio.duration) || audio.duration <= 0) {
         seekBar.style.background = "";
+        if (bufferStatusEl) bufferStatusEl.textContent = "";
         return;
       }
       const playedPct = Math.min(100, (audio.currentTime / audio.duration) * 100);
@@ -210,6 +210,7 @@ const Player = (() => {
         `var(--accent) 0%, var(--accent) ${playedPct}%, ` +
         `var(--accent-glow) ${playedPct}%, var(--accent-glow) ${bufferedPct}%, ` +
         `var(--surface-light) ${bufferedPct}%, var(--surface-light) 100%)`;
+      if (bufferStatusEl) bufferStatusEl.textContent = `Buffered ${Math.round(bufferedPct)}%`;
     }
 
     audio.addEventListener("loadedmetadata", () => {
@@ -378,24 +379,6 @@ const Player = (() => {
     volumeBar.addEventListener("input", () => {
       audio.volume = volumeBar.value;
     });
-
-    // Only relevant on narrow viewports, where CSS swaps the inline
-    // volume slider for this icon + popover (see .volume-btn in
-    // style.css) to stop it from pushing controls into a wrapped second
-    // row that could land partly below the screen.
-    if (volumeBtn && volumePopover) {
-      volumeBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const isOpen = volumePopover.classList.toggle("open");
-        volumeBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
-      });
-      document.addEventListener("click", (e) => {
-        if (!volumePopover.classList.contains("open")) return;
-        if (e.target === volumeBtn || volumePopover.contains(e.target)) return;
-        volumePopover.classList.remove("open");
-        volumeBtn.setAttribute("aria-expanded", "false");
-      });
-    }
 
     setupPlayerBarHeightSync();
     setupKeyboardShortcuts();
