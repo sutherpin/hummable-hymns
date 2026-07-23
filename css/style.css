@@ -527,7 +527,13 @@ a { color: var(--accent); text-decoration: none; }
   font-size: 0.72rem;
   color: var(--text-dim);
 }
-.player-progress input[type="range"] { flex: 1; }
+/* Without min-width: 0, a flex:1 range input's intrinsic minimum width
+   can force this row wider than its container — pushing #duration-time
+   past the visible edge. Browsers disagree on that intrinsic minimum for
+   <input type="range"> (seen clipping the duration text on Firefox for
+   Android but not Chrome), so this can't be left to the default. */
+.player-progress input[type="range"] { flex: 1; min-width: 0; }
+#current-time, #duration-time { flex-shrink: 0; }
 
 .player-controls {
   display: flex;
