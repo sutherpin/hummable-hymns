@@ -62,6 +62,11 @@ const Player = (() => {
   let preloadedForCurrentTrack = false;
   let preloadedUrl = null;
   let preloadController = null;
+  // Tracks intent ("should audio be playing right now"), separately from
+  // audio.paused — used to recover automatically once the page regains
+  // background execution privileges (e.g. after the phone unlocks) rather
+  // than requiring the user to notice and tap play again.
+  let shouldBePlaying = false;
   // Listeners for "what's playing" changes (track load, play, pause) that
   // care regardless of which playlist view is currently rendered — e.g.
   // the now-playing strip shown on the category grid.
@@ -162,6 +167,7 @@ const Player = (() => {
     prevBtn.addEventListener("click", playPrev);
     nextBtn.addEventListener("click", playNext);
     setupMediaSession();
+    setupBackgroundResilience();
     if (shuffleBtn) {
       shuffleBtn.addEventListener("click", toggleShuffle);
     }
@@ -175,17 +181,46 @@ const Player = (() => {
       });
     }
 
+    // Paints the seek bar in three segments — played, buffered-ahead, and
+    // not-yet-loaded — so there's a visible cue while waiting on a slow
+    // connection instead of the bar just sitting still with no explanation.
+    // Overrides the track's flat background via inline style since
+    // -webkit-appearance:none (below) makes the input itself the track.
+    function updateSeekBarFill() {
+      if (!isFinite(audio.duration) || audio.duration <= 0) {
+        seekBar.style.background = "";
+        return;
+      }
+      const playedPct = Math.min(100, (audio.currentTime / audio.duration) * 100);
+      let bufferedPct = playedPct;
+      for (let i = 0; i < audio.buffered.length; i++) {
+        if (audio.buffered.start(i) <= audio.currentTime && audio.currentTime <= audio.buffered.end(i)) {
+          bufferedPct = Math.min(100, (audio.buffered.end(i) / audio.duration) * 100);
+          break;
+        }
+      }
+      seekBar.style.background =
+        `linear-gradient(to right, ` +
+        `var(--accent) 0%, var(--accent) ${playedPct}%, ` +
+        `var(--accent-glow) ${playedPct}%, var(--accent-glow) ${bufferedPct}%, ` +
+        `var(--surface-light) ${bufferedPct}%, var(--surface-light) 100%)`;
+    }
+
     audio.addEventListener("loadedmetadata", () => {
       seekBar.max = audio.duration || 0;
       durationTimeEl.textContent = formatTime(audio.duration);
       updatePositionState();
+      updateSeekBarFill();
     });
+
+    audio.addEventListener("progress", updateSeekBarFill);
 
     audio.addEventListener("timeupdate", () => {
       seekBar.value = audio.currentTime;
       currentTimeEl.textContent = formatTime(audio.currentTime);
       maybePreloadNext();
       updatePositionState();
+      updateSeekBarFill();
     });
 
     audio.addEventListener("ended", playNext);
@@ -295,6 +330,7 @@ const Player = (() => {
 
     seekBar.addEventListener("input", () => {
       audio.currentTime = seekBar.value;
+      updateSeekBarFill();
     });
 
     volumeBar.addEventListener("input", () => {
@@ -348,8 +384,14 @@ const Player = (() => {
   function setupMediaSession() {
     if (!("mediaSession" in navigator)) return;
 
-    navigator.mediaSession.setActionHandler("play", () => audio.play());
-    navigator.mediaSession.setActionHandler("pause", () => audio.pause());
+    navigator.mediaSession.setActionHandler("play", () => {
+      shouldBePlaying = true;
+      playWithRetry();
+    });
+    navigator.mediaSession.setActionHandler("pause", () => {
+      shouldBePlaying = false;
+      audio.pause();
+    });
     navigator.mediaSession.setActionHandler("previoustrack", playPrev);
     navigator.mediaSession.setActionHandler("nexttrack", playNext);
     navigator.mediaSession.setActionHandler("seekbackward", (details) => {
@@ -371,12 +413,21 @@ const Player = (() => {
     }
   }
 
+  // Some Android/Chrome versions won't reliably render lock-screen/
+  // notification metadata (falling back to "No Title") unless artwork is
+  // provided — it's not optional the way it looks like it should be.
+  const MEDIA_SESSION_ARTWORK = [
+    { src: "img/icon-192.png", sizes: "192x192", type: "image/png" },
+    { src: "img/icon-512.png", sizes: "512x512", type: "image/png" },
+  ];
+
   function updateMediaSessionMetadata(song) {
     if (!("mediaSession" in navigator)) return;
     navigator.mediaSession.metadata = new MediaMetadata({
       title: song.title,
-      artist: "Hummable Hymns",
+      artist: "punchycrossfader",
       album: song.category || "",
+      artwork: MEDIA_SESSION_ARTWORK,
     });
   }
 
@@ -444,9 +495,8 @@ const Player = (() => {
     }
     audio.src = url;
     updateMediaSessionMetadata(song);
-    audio.play().catch(() => {
-      /* Autoplay may be blocked until user interacts; that's fine. */
-    });
+    shouldBePlaying = true;
+    playWithRetry();
     onTrackChange(currentIndex, song);
     loadLyricsFor(song);
     notifyChange();
@@ -588,6 +638,41 @@ const Player = (() => {
     });
   }
 
+  // A locked phone can silently reject or delay audio.play() (mobile
+  // background-execution policies), and once that happens plain
+  // `.catch(() => {})` just gives up — the track sits paused until the
+  // user notices and taps play again. Retry with backoff instead, and
+  // pair it with the visibilitychange handler below so unlocking the
+  // phone also nudges playback rather than waiting on a fixed timer.
+  function playWithRetry(attempt) {
+    attempt = attempt || 0;
+    audio.play().catch(() => {
+      if (!shouldBePlaying || attempt >= MAX_RETRIES) return;
+      setTimeout(() => playWithRetry(attempt + 1), RETRY_DELAY_MS * (attempt + 1));
+    });
+  }
+
+  // Mobile browsers throttle or fully suspend background network activity
+  // once the screen locks. Two things follow from that:
+  //  - grab the next-track preload the moment the page goes hidden, since
+  //    that's the best chance it has to actually complete before the OS
+  //    clamps down further (waiting for the normal "15s remaining" trigger
+  //    risks landing after the phone's already locked);
+  //  - if playback was supposed to be going and isn't once the page comes
+  //    back, don't wait for the user to notice — try to resume right away.
+  function setupBackgroundResilience() {
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") {
+        if (!preloadedForCurrentTrack) {
+          preloadedForCurrentTrack = true;
+          preloadNext();
+        }
+      } else if (shouldBePlaying && audio.paused) {
+        playWithRetry();
+      }
+    });
+  }
+
   function togglePlay() {
     // Only currentSong (not currentIndex) tells us whether something has
     // ever been loaded — currentIndex can be -1 just because the song
@@ -604,8 +689,10 @@ const Player = (() => {
       return;
     }
     if (audio.paused) {
-      audio.play();
+      shouldBePlaying = true;
+      playWithRetry();
     } else {
+      shouldBePlaying = false;
       audio.pause();
     }
   }
