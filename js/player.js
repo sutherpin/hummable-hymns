@@ -59,6 +59,12 @@ const Player = (() => {
   let stallTimer = null;
   const RETRY_DELAY_MS = 1000;
   const STALL_TIMEOUT_MS = 12000;
+  // How far before a track's natural end to cut over to the next one. Small
+  // enough that the lost tail is inaudible/imperceptible on typical music,
+  // but enough margin that timeupdate's coarse (~250ms) granularity reliably
+  // catches it before the browser fires `ended` on its own.
+  const GAPLESS_CUTOVER_SECONDS = 0.4;
+  let gaplessCutoverDone = false;
   let preloadedForCurrentTrack = false;
   let preloadedUrl = null;
   let preloadController = null;
@@ -211,11 +217,38 @@ const Player = (() => {
       durationTimeEl.textContent = formatTime(audio.duration);
       updatePositionState();
       updateSeekBarFill();
+      // Re-applied here (in addition to loadTrack) because some Android
+      // Chrome builds appear to snapshot the lock-screen notification's
+      // metadata based on the element's readiness at the moment it's set —
+      // setting it again once the element actually has real duration/
+      // readiness data gives it a second, later-timed chance to stick.
+      if (currentSong) updateMediaSessionMetadata(currentSong);
     });
 
     audio.addEventListener("progress", updateSeekBarFill);
 
     audio.addEventListener("timeupdate", () => {
+      // Swap to the next track fractionally before this one would
+      // naturally end, rather than waiting for `ended`. Waiting for
+      // `ended` means there's a real instant where the tab is producing
+      // no audio at all while the next track's src/decoder gets set up —
+      // and on a locked phone, that's exactly the kind of gap Chrome uses
+      // to decide the (now silent) background tab can be frozen, which
+      // then means nothing runs to recover until the phone is unlocked.
+      // Cutting over early keeps the element continuously playing
+      // *something* the whole time, so that exemption is never lost.
+      // Still a single <audio> element throughout — no second decoder,
+      // so this doesn't reintroduce the earlier decoder-contention crash.
+      if (
+        !gaplessCutoverDone &&
+        isFinite(audio.duration) &&
+        audio.duration > 0 &&
+        audio.duration - audio.currentTime <= GAPLESS_CUTOVER_SECONDS
+      ) {
+        gaplessCutoverDone = true;
+        playNext();
+        return;
+      }
       seekBar.value = audio.currentTime;
       currentTimeEl.textContent = formatTime(audio.currentTime);
       maybePreloadNext();
@@ -223,7 +256,13 @@ const Player = (() => {
       updateSeekBarFill();
     });
 
-    audio.addEventListener("ended", playNext);
+    // Fallback only — the timeupdate check above should always cut over
+    // first. This still matters for very short/quiet tracks where
+    // timeupdate's ~250ms granularity might not land inside the cutover
+    // window before the browser reports `ended` on its own.
+    audio.addEventListener("ended", () => {
+      if (!gaplessCutoverDone) playNext();
+    });
 
     // A slow/flaky connection more often shows up as a silent stall than
     // a hard error — the browser fires `waiting` and just never resumes.
@@ -319,7 +358,10 @@ const Player = (() => {
 
     audio.addEventListener("play", () => {
       playPauseBtn.innerHTML = "&#10074;&#10074;";
-      if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
+      if ("mediaSession" in navigator) {
+        navigator.mediaSession.playbackState = "playing";
+        if (currentSong) updateMediaSessionMetadata(currentSong);
+      }
       notifyChange();
     });
     audio.addEventListener("pause", () => {
@@ -482,6 +524,7 @@ const Player = (() => {
     }
     retryCount = 0;
     preloadedForCurrentTrack = false;
+    gaplessCutoverDone = false;
     const song = playlist[currentIndex];
     const url = buildSongUrl(song.filename);
     // If a preload is still in flight for some other track (e.g. the user
