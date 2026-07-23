@@ -236,9 +236,15 @@
       "filename": "beatitudes.mp3",
       "category": "biblically-derived",
       "dateAdded": "July 22, 2026"
+    },
+    {
+      "title": "Judges",
+      "filename": "judges_final.mp3",
+      "category": "bible-summary",
+      "dateAdded": "July 23, 2026"
     }
   ],
   "siteTitle": "Hummable Hymns",
   "tagline": "Original songs composed with AI tools to uplift, encourage and nourish the Bride of Christ",
-  "lastUpdated": "July 22, 2026"
+  "lastUpdated": "July 23, 2026"
 }
