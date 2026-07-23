@@ -21,7 +21,4 @@ git commit -m "$commit_msg"
 echo "⬆️  Pushing to GitHub..."
 git push
 
-echo "☁️  Deploying to Cloudflare..."
-wrangler deploy
-
-echo "✅ Done — pushed to GitHub and deployed to Cloudflare"
+echo "✅ Done — pushed to GitHub (Cloudflare Pages auto-deploys from this push)"
