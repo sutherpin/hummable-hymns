@@ -181,7 +181,7 @@ const Player = (() => {
       lyricsBtn.addEventListener("click", () => {
         if (lyricsBtn.disabled) return;
         const isOpen = lyricsPanel.classList.toggle("open");
-        lyricsBtn.innerHTML = isOpen ? "&#9650; Hide Lyrics" : "&#9660; Lyrics";
+        lyricsBtn.innerHTML = isOpen ? "&#9650; Lyrics" : "&#9660; Lyrics";
         lyricsBtn.setAttribute("aria-label", isOpen ? "Hide lyrics" : "Show lyrics");
       });
     }
