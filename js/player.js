@@ -455,22 +455,29 @@ const Player = (() => {
     }
   }
 
-  // Some Android/Chrome versions won't reliably render lock-screen/
-  // notification metadata (falling back to "No Title") unless artwork is
-  // provided — it's not optional the way it looks like it should be.
   const MEDIA_SESSION_ARTWORK = [
     { src: "img/icon-192.png", sizes: "192x192", type: "image/png" },
     { src: "img/icon-512.png", sizes: "512x512", type: "image/png" },
   ];
 
+  // DISABLED: on at least one real Android/Chrome device, explicitly
+  // setting navigator.mediaSession.metadata made the lock-screen title
+  // *worse*, not better — it went from correctly showing (Chrome's own
+  // automatic fallback, which derives a title from the audio file itself
+  // when no explicit metadata is set) to "No Title" once this started
+  // running. Whatever's going wrong here, it's actively overriding a
+  // working default with a broken one, so leave it off and let Chrome's
+  // built-in behavior handle the title again. The action handlers below
+  // (needed for Bluetooth transport buttons) are unaffected by this —
+  // they're a separate mechanism from metadata display.
   function updateMediaSessionMetadata(song) {
-    if (!("mediaSession" in navigator)) return;
-    navigator.mediaSession.metadata = new MediaMetadata({
-      title: song.title,
-      artist: "punchycrossfader",
-      album: song.category || "",
-      artwork: MEDIA_SESSION_ARTWORK,
-    });
+    // if (!("mediaSession" in navigator)) return;
+    // navigator.mediaSession.metadata = new MediaMetadata({
+    //   title: song.title,
+    //   artist: "punchycrossfader",
+    //   album: song.category || "",
+    //   artwork: MEDIA_SESSION_ARTWORK,
+    // });
   }
 
   function updatePositionState() {
