@@ -57,6 +57,12 @@
 
 .hidden { display: none !important; }
 
+/* Belt-and-suspenders against any element ending up a few px wider than
+   the viewport (browsers disagree on intrinsic widths for some form
+   controls — see the range-input min-width fix above) letting the whole
+   page pan/"float" horizontally by a sliver. Vertical scroll is untouched. */
+html, body { overflow-x: hidden; }
+
 body {
   margin: 0;
   font-family: Verdana, Geneva, "DejaVu Sans", sans-serif;
