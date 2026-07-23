@@ -654,6 +654,9 @@ input[type="range"]::-moz-range-thumb {
   padding: 20px;
   opacity: 0.6;
 }
+.deploy-stamp {
+  font-size: 0.95rem;
+}
 
 /* ── Admin styles ── */
 .admin-login {

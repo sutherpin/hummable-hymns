@@ -66,6 +66,18 @@ document.addEventListener("DOMContentLoaded", () => {
         if (el) el.textContent = "Last updated: " + data.lastUpdated;
       }
 
+      // Stamped fresh by deploy.sh on every deploy — lets a page load be
+      // checked against what was actually last pushed live, rather than a
+      // cached copy the browser (or an intermediate CDN edge) is still
+      // serving.
+      fetch("data/deploy-timestamp.txt", { cache: "no-store" })
+        .then((res) => (res.ok ? res.text() : Promise.reject()))
+        .then((text) => {
+          const el = document.getElementById("deploy-stamp");
+          if (el) el.textContent = "Deployed: " + text.trim();
+        })
+        .catch(() => {});
+
       if (document.getElementById("audio-player")) {
         Player.init();
         Player.onChange(updateNowPlayingStrip);
