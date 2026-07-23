@@ -432,7 +432,17 @@ const Player = (() => {
     retryCount = 0;
     preloadedForCurrentTrack = false;
     const song = playlist[currentIndex];
-    audio.src = buildSongUrl(song.filename);
+    const url = buildSongUrl(song.filename);
+    // If a preload is still in flight for some other track (e.g. the user
+    // jumped to a song that wasn't the one being warmed), it's now just
+    // wasting bandwidth the real request needs — cut it loose. If it
+    // happens to match the track we're loading, leave it running so its
+    // progress isn't wasted.
+    if (preloadedUrl !== url) {
+      abortPreload();
+      preloadedUrl = null;
+    }
+    audio.src = url;
     updateMediaSessionMetadata(song);
     audio.play().catch(() => {
       /* Autoplay may be blocked until user interacts; that's fine. */
@@ -507,12 +517,23 @@ const Player = (() => {
     if (!nextSong) return;
     const url = buildSongUrl(nextSong.filename);
     if (preloadedUrl === url) return;
+    // Only one preload should ever be in flight — an earlier one that
+    // hadn't finished yet would otherwise keep running unconsumed
+    // alongside this new one, each holding a connection open and eating
+    // bandwidth in the background indefinitely.
+    if (preloadController) preloadController.abort();
     preloadedUrl = url;
     preloadController = new AbortController();
-    fetch(url, { signal: preloadController.signal }).catch(() => {
-      /* Aborted or failed — the real request when the track actually
-         loads will just fetch cold, no worse than not preloading. */
-    });
+    fetch(url, { signal: preloadController.signal })
+      .then((res) => res.arrayBuffer())
+      // Reading the body to completion is what actually lets the request
+      // finish and frees the connection — an unread fetch() response
+      // stays open indefinitely instead of completing, silently holding
+      // a connection/bandwidth hostage in the background.
+      .catch(() => {
+        /* Aborted or failed — the real request when the track actually
+           loads will just fetch cold, no worse than not preloading. */
+      });
   }
 
   function loadLyricsFor(song) {
