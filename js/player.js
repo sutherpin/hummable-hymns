@@ -205,10 +205,14 @@ const Player = (() => {
           break;
         }
       }
+      // Deliberately green rather than the theme's accent color — it's
+      // meant to stand out as a distinct "buffered" cue rather than blend
+      // in, even at the cost of not matching the rest of the palette.
+      const BUFFERED_COLOR = "rgba(46, 204, 113, 0.45)";
       seekBar.style.background =
         `linear-gradient(to right, ` +
         `var(--accent) 0%, var(--accent) ${playedPct}%, ` +
-        `var(--accent-glow) ${playedPct}%, var(--accent-glow) ${bufferedPct}%, ` +
+        `${BUFFERED_COLOR} ${playedPct}%, ${BUFFERED_COLOR} ${bufferedPct}%, ` +
         `var(--surface-light) ${bufferedPct}%, var(--surface-light) 100%)`;
       if (bufferStatusEl) bufferStatusEl.textContent = `Buffered ${Math.round(bufferedPct)}%`;
     }
