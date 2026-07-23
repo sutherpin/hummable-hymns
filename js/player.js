@@ -55,12 +55,13 @@ const Player = (() => {
   let consecutiveLoadFailures = 0;
   let audioContext;
   let initialized = false;
-  let preloadAudio;
   let retryTimer = null;
   let stallTimer = null;
   const RETRY_DELAY_MS = 1000;
   const STALL_TIMEOUT_MS = 12000;
   let preloadedForCurrentTrack = false;
+  let preloadedUrl = null;
+  let preloadController = null;
   // Listeners for "what's playing" changes (track load, play, pause) that
   // care regardless of which playlist view is currently rendered — e.g.
   // the now-playing strip shown on the category grid.
@@ -142,8 +143,6 @@ const Player = (() => {
 
     ensureAudioElement();
     audio = document.getElementById("audio-player");
-    preloadAudio = new Audio();
-    preloadAudio.preload = "auto";
     const playPauseBtn = document.getElementById("play-pause-btn");
     const prevBtn = document.getElementById("prev-btn");
     const nextBtn = document.getElementById("next-btn");
@@ -484,9 +483,7 @@ const Player = (() => {
   // if it stalls, the background preload of the *next* track is a much
   // lower priority and should stop competing for the connection.
   function abortPreload() {
-    if (!preloadAudio) return;
-    preloadAudio.removeAttribute("src");
-    preloadAudio.load();
+    if (preloadController) preloadController.abort();
     preloadedForCurrentTrack = false;
   }
 
@@ -494,16 +491,28 @@ const Player = (() => {
   // the current one is still playing, so that when `ended` fires and
   // playNext() swaps the <audio> src, the data is already warm instead
   // of starting a cold connection right at the moment playback needs it.
+  //
+  // This deliberately uses a plain fetch() rather than a second <audio>
+  // element (the previous approach). A second <audio>/Audio() instance
+  // means a second decoder session, and many Android devices only support
+  // a small number of concurrent hardware audio decoders — starting one
+  // late in the current track (right when this preload fires) could
+  // silently steal the decoder out from under the track that's actively
+  // playing, with no `error` event at all, just a dead stop. A raw fetch
+  // only warms the HTTP cache; it never touches a decoder.
   function preloadNext() {
-    if (!preloadAudio) return;
     const nextIndex = peekNextIndex();
     if (nextIndex < 0) return;
     const nextSong = playlist[nextIndex];
     if (!nextSong) return;
     const url = buildSongUrl(nextSong.filename);
-    if (preloadAudio.src === url) return;
-    preloadAudio.src = url;
-    preloadAudio.load();
+    if (preloadedUrl === url) return;
+    preloadedUrl = url;
+    preloadController = new AbortController();
+    fetch(url, { signal: preloadController.signal }).catch(() => {
+      /* Aborted or failed — the real request when the track actually
+         loads will just fetch cold, no worse than not preloading. */
+    });
   }
 
   function loadLyricsFor(song) {
