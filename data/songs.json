@@ -27,241 +27,286 @@
   ],
   "songs": [
     {
+      "id": "psalm-8-how-majestic-is-your-name",
       "title": "Psalm 8: How Majestic is Your Name",
       "filename": "Psalm 8_ How Majestic is Your Name.mp3",
       "category": "biblically-derived"
     },
     {
+      "id": "ephesians-4-unity",
       "title": "Ephesians 4: Unity",
       "filename": "Eph 4 Unity T21 R9.6 C03.mp3",
       "category": "biblically-derived"
     },
     {
+      "id": "genesis",
       "title": "Genesis",
       "filename": "Genesis T08 R9.4 C01 Final.mp3",
       "category": "bible-summary"
     },
     {
+      "id": "exodus",
       "title": "Exodus",
       "filename": "Exodus T11 C01 _Final.mp3",
       "category": "bible-summary"
     },
     {
+      "id": "leviticus",
       "title": "Leviticus",
       "filename": "Leviticus T09 C01_Final.mp3",
       "category": "bible-summary"
     },
     {
+      "id": "numbers",
       "title": "Numbers",
       "filename": "Numbers T09 R9.4 C01_Final.mp3",
       "category": "bible-summary"
     },
     {
+      "id": "deuteronomy",
       "title": "Deuteronomy",
       "filename": "Deuteronomy T18 C01_Final.mp3",
       "category": "bible-summary",
       "dateAdded": "June 27, 2026"
     },
     {
+      "id": "ephesus",
       "title": "Ephesus",
       "filename": "01 Ephesus Final.mp3",
       "category": "seven-churches"
     },
     {
+      "id": "smyrna",
       "title": "Smyrna",
       "filename": "02 Church at Smyrna C05 Final.mp3",
       "category": "seven-churches"
     },
     {
+      "id": "pergamon-pergamos",
       "title": "Pergamon (Pergamos)",
       "filename": "03 Pergamon (Pergamos) C01 Final.mp3",
       "category": "seven-churches"
     },
     {
+      "id": "thyatira",
       "title": "Thyatira",
       "filename": "04 Thyatira T08 C01 Final.mp3",
       "category": "seven-churches"
     },
     {
+      "id": "sardis",
       "title": "Sardis",
       "filename": "05 Sardis C01 Final.mp3",
       "category": "seven-churches"
     },
     {
+      "id": "philadelphia",
       "title": "Philadelphia",
       "filename": "06 Philadelphia C01 Final.mp3",
       "category": "seven-churches"
     },
     {
+      "id": "laodicea",
       "title": "Laodicea",
       "filename": "07 Laiodocia C01 Final.mp3",
       "category": "seven-churches"
     },
     {
+      "id": "do-not-worry-matthew-6",
       "title": "Do Not Worry (Matthew 6)",
       "filename": "Do Not Worry (Matt 6) T06 R9.4 C01 Final.mp3",
       "category": "biblically-derived"
     },
     {
+      "id": "jeremiah-12",
       "title": "Jeremiah 12",
       "filename": "Jeremiah 12  T04 C01 Final.mp3",
       "category": "biblically-derived"
     },
     {
+      "id": "thornbush-king",
       "title": "Thornbush King",
       "filename": "Thornbush King T8 R9.5.mp3",
       "category": "biblically-derived"
     },
     {
+      "id": "balaam-vs-angel",
       "title": "Balaam vs Angel",
       "filename": "Balaam vs Angel R9.5 (1).mp3",
       "category": "biblically-derived"
     },
     {
+      "id": "love-chapter-1-corinthians-13",
       "title": "Love Chapter (1 Corinthians 13)",
       "filename": "Love Chapter R9.6 C01_FInal.mp3",
       "category": "biblically-derived"
     },
     {
+      "id": "stand-firm-a-song-of-biblical-courage",
       "title": "Stand Firm (A Song of Biblical Courage)",
       "filename": "Stand Firm (A Song of Biblical Courage) Blues Rate9.4_Final.mp3",
       "category": "biblically-derived"
     },
     {
+      "id": "chains-of-your-own-making",
       "title": "Chains of Your Own Making",
       "filename": "Chains of your own Making T1 R9.7.mp3",
       "category": "biblically-derived"
     },
     {
+      "id": "spoken-over-me",
       "title": "Spoken Over Me",
       "filename": "Spoken Over Me T20 R 9.8.mp3",
       "category": "inspirational"
     },
     {
+      "id": "proverbs-5-the-stranger",
       "title": "Proverbs 5: The Stranger",
       "filename": "Proverbs 5 - The Stranger T13 R9.6.mp3",
       "category": "biblically-derived"
     },
     {
+      "id": "think-on-these-things-ephesians",
       "title": "Think on These Things (Ephesians)",
       "filename": "Think on These Things Eph T09 R10.mp3",
       "category": "biblically-derived"
     },
     {
+      "id": "proverbs-18-strong-tower",
       "title": "Proverbs 18: Strong Tower",
       "filename": "Proverbs 18_ Strong Tower T08 R9.9.mp3",
       "category": "biblically-derived"
     },
     {
+      "id": "days-of-noah",
       "title": "Days of Noah",
       "filename": "Days of Noah 2.0.mp3",
       "category": "inspirational"
     },
     {
+      "id": "rock-of-refuge",
       "title": "Rock of Refuge",
       "filename": "Rock of Refuge T32 R9.9 Final.mp3",
       "category": "biblically-derived"
     },
     {
+      "id": "1-timothy-3-overseer",
       "title": "1 Timothy 3: Overseer",
       "filename": "1 Tim 3 Overseer T12 R9.9 Final.mp3",
       "category": "biblically-derived"
     },
     {
+      "id": "worship",
       "title": "Worship",
       "filename": "Worship T15 MV 01 R9.7.mp3",
       "category": "inspirational"
     },
     {
+      "id": "fire-of-the-tongue",
       "title": "Fire of the Tongue",
       "filename": "Fire of the Tongue T16 R9.6 Cover 04 R9.mp3",
       "category": "biblically-derived"
     },
     {
+      "id": "james-4-humble-yourself",
       "title": "James 4: Humble Yourself",
       "filename": "James 4 _ Humble Yourself T14 C02_Final.mp3",
       "category": "biblically-derived",
       "dateAdded": "June 26, 2026"
     },
     {
+      "id": "the-fragrance-of-love",
       "title": "The Fragrance of Love",
       "filename": "The Fragrance of Love Excellent rate 10_Final.mp3",
       "category": "inspirational",
       "dateAdded": "June 27, 2026"
     },
     {
+      "id": "hebrews-11-faith",
       "title": "Hebrews 11 - Faith",
       "filename": "Hebrews 11 - Faith T15 R9.5 C01_Final.mp3",
       "category": "biblically-derived",
       "dateAdded": "June 27, 2026"
     },
     {
+      "id": "joshua",
       "title": "Joshua",
       "filename": "Joshua T15 C01_Final.mp3",
       "category": "bible-summary",
       "dateAdded": "June 27, 2026"
     },
     {
+      "id": "truth-resisted",
       "title": "Truth Resisted",
       "filename": "truth resisted t05 c01_final.mp3",
       "category": "inspirational",
       "dateAdded": "July 6, 2026"
     },
     {
+      "id": "love-runs-deep",
       "title": "Love Runs Deep",
       "filename": "love runs deeply t16 r9_final.mp3",
       "category": "inspirational",
       "dateAdded": "July 7, 2026"
     },
     {
+      "id": "rooted-in-love",
       "title": "Rooted in Love",
       "filename": "rooted in love.mp3",
       "category": "fun-and-random",
       "dateAdded": "July 9, 2026"
     },
     {
+      "id": "holy-fear-perfect-love",
       "title": "Holy Fear, Perfect Love",
       "filename": "holy fear, perfect love t29 c01_final.mp3",
       "category": "inspirational",
       "dateAdded": "July 9, 2026"
     },
     {
+      "id": "2-peter-2-false-teachers",
       "title": "2 Peter 2 - False Teachers",
       "filename": "2 peter 2 false teachers t21 c01_final.mp3",
       "category": "biblically-derived",
       "dateAdded": "July 17, 2026"
     },
     {
+      "id": "beatitudes",
       "title": "Beatitudes",
       "filename": "beatitudes.mp3",
       "category": "biblically-derived",
       "dateAdded": "July 22, 2026"
     },
     {
+      "id": "judges",
       "title": "Judges",
       "filename": "judges_final.mp3",
       "category": "bible-summary",
       "dateAdded": "July 23, 2026"
     },
     {
+      "id": "matthew-23-whitewashed-tombs",
       "title": "Matthew 23: Whitewashed Tombs",
       "filename": "matthew_23_whitewashed_tombs.mp3",
       "category": "biblically-derived",
       "dateAdded": "July 24, 2026"
     },
     {
+      "id": "tgs-childhood-memories",
       "title": "TGS Childhood Memories",
       "filename": "tgs childhood memories t47_restored.mp3",
       "category": "inspirational",
       "dateAdded": "July 27, 2026"
     },
     {
+      "id": "o-give-thanks",
       "title": "O Give Thanks",
       "filename": "o give thanks t07 r9.7_restored.mp3",
       "category": "inspirational",
       "dateAdded": "August 5, 2026"
     },
     {
+      "id": "book-of-ruth",
       "title": "Book of Ruth",
       "filename": "book of ruth rewrite t02 r9.6_restored.mp3",
       "category": "bible-summary",

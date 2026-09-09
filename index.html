@@ -9,7 +9,7 @@
 <title>Hummable Hymns</title>
 <link rel="icon" href="img/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="img/icon-192.png">
-<link rel="stylesheet" href="css/style.css?v=21">
+<link rel="stylesheet" href="css/style.css?v=22">
 <script>
   (function () {
     var saved = localStorage.getItem("theme");
@@ -55,6 +55,9 @@
     </div>
     <div class="player-info">
       <p id="now-playing-title">Select a song</p>
+    </div>
+    <div class="player-rating hidden" id="player-rating">
+      <!-- Stars + readout injected by js/ratings.js -->
     </div>
     <div class="player-progress">
       <span id="current-time">0:00</span>
@@ -107,5 +110,6 @@
 
   <script src="js/player.js?v=21"></script>
   <script src="js/app.js?v=21"></script>
+  <script src="js/ratings.js?v=22"></script>
 </body>
 </html>
